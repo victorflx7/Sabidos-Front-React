@@ -29,3 +29,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SABIDOS_FC654 }}
           projectId: sabidos-fc654
+          entryPoint: SabidosWeb
