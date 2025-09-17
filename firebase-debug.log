@@ -1,0 +1,25 @@
+[debug] [2025-09-17T13:22:00.063Z] ----------------------------------------------------------------------
+[debug] [2025-09-17T13:22:00.067Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\willi\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-09-17T13:22:00.067Z] CLI Version:   14.16.0
+[debug] [2025-09-17T13:22:00.067Z] Platform:      win32
+[debug] [2025-09-17T13:22:00.068Z] Node Version:  v22.12.0
+[debug] [2025-09-17T13:22:00.068Z] Time:          Wed Sep 17 2025 10:22:00 GMT-0300 (Horário Padrão de Brasília)
+[debug] [2025-09-17T13:22:00.068Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-17T13:22:00.076Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-17T13:22:00.076Z] > authorizing via signed-in user (sabidos.dev@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Sabidos-Front-React
+
+Before we get started, keep in mind:
+
+  * You are currently outside your home directory
+
