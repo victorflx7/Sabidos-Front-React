@@ -16,12 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm ci
-        working-directory: SabidosWeb
-
       - name: Build project
-        run: npm run build
+        run: |
+          npm ci
+          npm run build
         working-directory: SabidosWeb
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
