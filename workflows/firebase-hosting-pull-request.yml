@@ -1,12 +1,18 @@
+name: Test PR workflow
 on:
   pull_request:
     branches:
       - main
 
 jobs:
-  build_and_preview:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test step
-        run: echo "Workflow rodando!"
+      - name: List files in root
+        run: ls -la
+      - name: Test npm
+        run: |
+          node -v
+          npm -v
+          echo "Workflow rodando no root"
