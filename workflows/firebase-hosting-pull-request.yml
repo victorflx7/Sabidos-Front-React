@@ -1,5 +1,9 @@
-name: Deploy to Firebase Hosting on PR
+name: Deploy to Firebase Hosting
+
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
