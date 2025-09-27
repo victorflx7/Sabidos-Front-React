@@ -1,33 +1,12 @@
-name: Deploy to Firebase Hosting on PR
 on:
   pull_request:
     branches:
       - main
 
-permissions:
-  checks: write
-  contents: read
-  pull-requests: write
-
 jobs:
   build_and_preview:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 'lts/*'
-          
-      - name: Build project
-        run: |
-          npm ci
-          npm run build
-
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SABIDOS_FC654 }}
-          projectId: sabidos-fc654
+      - name: Test step
+        run: echo "Workflow rodando!"
