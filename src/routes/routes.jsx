@@ -9,7 +9,7 @@ import SobreNos from "../pages/SobreNos/SobreNos";
 import Cadastro from "../pages/Cadastro/Cadastro";
 import Login from "../pages/Login/Login";
 import Flashcard from "../pages/Flashcard/Flashcard";*/
-import AccountLayout from "../Layout/AccountLayout";
+import AccountLayout from "../layout/AccountLayout";
 
 export function AppRoutes() {
   return (
