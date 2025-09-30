@@ -3,7 +3,7 @@ name: Deploy no firebase
 on:
   pull_request:
     branches:
-      - main  
+      - main
 
 permissions:
   contents: read
@@ -14,17 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 'lts/*'
-
       - name: Install and Build
         run: |
+          node -v
+          npm -v
+          echo "Workflow rodando no root"
           npm ci
           npm run build
-
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
