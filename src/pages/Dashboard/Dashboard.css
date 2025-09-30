@@ -1,0 +1,268 @@
+.Dashboard {
+  height: 90vh;
+}
+
+/*ComentarioSabido*/
+.mensagemSabido {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+
+}
+
+.cont {
+  width: 400px;
+  height: 90px;
+  background-color: #292535;
+  border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cxpTxt {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.txtSabido {
+  color: #EEE;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 25px;
+  letter-spacing: 1px;
+  text-align: start;
+}
+
+.imgSabido {
+  width: 165px;
+}
+
+/*Atalho*/
+/* Mantém tudo igual aqui */
+.atEinf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.atalhos {
+  position: relative;
+  width: 300px;
+}
+
+.contencao {
+  width: 300px;
+  height: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.circulo-central {
+  width: 120px;
+  height: 120px;
+  background-color: #3B2868;
+  border-radius: 50%;
+  border: 3px solid #7763B3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.circulo {
+  width: 60px;
+  height: 60px;
+  background-color: #3B2868;
+  border-radius: 50%;
+  border: 2px solid #7763B3;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+
+.circulo1 {
+  top: 50%;
+  left: 5%;
+}
+
+.circulo2 {
+  top: 82%;
+  left: 15%;
+}
+
+.circulo3 {
+  top: 50%;
+  left: 95%;
+}
+
+.circulo4 {
+  top: 82%;
+  left: 85%;
+}
+
+.circulo5 {
+  top: 100%;
+  left: 50%;
+}
+
+
+/*Tabela de Informações do Usuário*/
+
+.infos {
+  width: 350px;
+  height: 250px;
+  background-color: #292535;
+  border-radius: 9px;
+  margin-left: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.contencao_svgte {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.clock{
+  height: 45px;
+  translate: -0.3px 1.5px;
+}
+.notas, .eventos, .cards{
+  height: 20px;
+  translate: 1px 2px;
+}
+
+.blcsvg_do_te {
+  width: 60px;
+  height: 60px;
+  border: 5px;
+  border-radius: 20px;
+  border: 5px solid #7763B3;
+  background: #3B2868;
+}
+
+.blc_do_te {
+  width: 180px;
+  height: 60px;
+}
+
+.tempo_estudo {
+  width: 310px;
+  height: 120px;
+  background-color: #423E51;
+  margin: 20px 10px;
+  border-radius: 5px;
+  text-align: center;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.tempo_valor {
+  font-size: 40px;
+  font-weight: bold;
+  translate: -1px -15px;
+}
+
+.estatisticas {
+  width: 310px;
+  height: 100px;
+  margin: 10px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between
+}
+
+.itens_ferramentas {
+  height: 100px;
+  width: 70px;
+  text-align: center;
+  background-color: #423E51;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  position: relative;
+}
+.item-nome{
+  margin-top: 10px;
+}
+
+.itens_ferramentas,
+.blc_do_te {
+  color: #FFF;
+  border-radius: 5px;
+}
+.text_estudo{
+  translate: 0px -7px;
+}
+.top-square {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #7763B3;
+  background: #3B2868;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .mensagemSabido {
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px;
+  }
+
+  .cont {
+    width: 90%;
+    height: auto;
+    padding: 16px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .imgSabido {
+    width: 120px;
+  }
+
+  .txtSabido {
+    font-size: 14px;
+    line-height: 22px;
+    padding-right: 0;
+    text-align: center;
+    align-self: center;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .atalhos,
+  .contencao {
+    width: 90%;
+    height: auto;
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+
+  .atEinf {
+    flex-direction: column;
+  }
+}
