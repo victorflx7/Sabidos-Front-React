@@ -1,12 +1,75 @@
 import React from 'react'
 import { Link } from 'react-router-dom';
 import Login from '../../Components/auth/LoginForm';
-function LoginPage() {
+
+
+function Login() {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const result = await fazerLogin(email, senha);
+      // Redireciona após login (use navigate ou estado global)
+      if (result.success) {
+
+
+        alert('Login realizado com sucesso!');
+        navigate('/dashboard'); // Redireciona para página interna
+      } else {
+        setErro(result.error);
+      }
+    } catch (error) {
+      setErro("Falha no login: " + error.message);
+    }
+  };
+
+  
+
   return (
-    <>
-    <Login/>
-    </>
+
+    <div className="login-container">
+      <header className="headerL">
+        <img className="logoL" src="LogoLogin.svg" alt="logoExtensa" width="409px" height="153px" />
+      </header>
+      <br />
+      <nav>
+        <a id="b1" className="luz">Login</a>
+        <Link to="/cadastro" id="b2">Cadastro</Link>
+      </nav>
+      <main id="login" >
+        <div id="d1">
+          <form onSubmit={handleSubmit} className='formlog'>
+            {/* <input className="inputL" type="text" placeholder="Usuário" /> */}
+            <input className="inputL" type="email" name="" id="" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className="inputL" type="password" name="password" id="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
+            <button type="submit" className="buttonLL" disabled={loading}>
+              {loading ? 'Entrando....' : 'Entrar'}
+            </button>
+            {erro && <p className="erro">{erro}</p>}
+          </form>
+        </div>
+
+        <div id="d3-log">
+        </div>
+        <div id="d4-log">
+          <p id="p">Ainda não possui uma conta?</p>
+        </div>
+        <div id="d5-log">
+
+          <Link to="/cadastro" id="a">Cadastre-se</Link>
+
+        </div>
+      </main>
+
+    </div>
   )
 }
 
-export default LoginPage   
+export default Login;
