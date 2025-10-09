@@ -1,80 +1,52 @@
-# .github/workflows/vercel-cicd.yml
+name: Deploy to Vercel
 
-name: Vercel CI/CD - React Vite
-
-# Define os eventos que irão disparar este workflow
 on:
-  # Dispara em todos os pushes para a branch 'main'
   push:
-    branches:
-      - main
-  # Dispara em todos os pull requests abertos, sincronizados ou reabertos
-  pull_request:
-    branches:
-      - main
-  # Permite que você execute este workflow manualmente
+    branches: [main]
   workflow_dispatch:
 
-# Define as variáveis de ambiente padrão para os comandos da Vercel
-env:
-  # Diretório onde o código do seu frontend está (geralmente '.')
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+concurrency:
+  group: prod-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
-    # Define o ambiente da máquina virtual que rodará o job
+  deploy:
     runs-on: ubuntu-latest
+    environment: production
     
     steps:
-      # Passo 1: Checkout do código
-      - name: Checkout do Código
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+
+    - name: Deploy to Vercel
+      id: deploy
+      run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    - name: Report Incident if Deploy Failed
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'Deployment Failure - ${{ github.sha }}',
+            labels: ['incident', 'deployment-failure'],
+            body: 'Deployment failed for commit ${{ github.sha }}'
+          })
+
         
-      # Passo 2: Configurar Node.js (Vite/React geralmente usa uma versão LTS recente)
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20' # Use a versão LTS mais recente
-          cache: 'npm' # Ou 'yarn', 'pnpm', dependendo do seu gerenciador de pacotes
-
-      # Passo 3: Instalar dependências
-      - name: Instalar dependências
-        run: npm install # Altere para 'yarn install' ou 'pnpm install' se necessário
-
-      # Passo 4 (Opcional): Executar testes (Se tiver um script 'test' no package.json)
-      - name: Executar testes
-        # Se os testes falharem, o build não continua
-        run: npm test --if-present 
-        # 'npm test --if-present' só roda se o script 'test' existir
-
-      # Passo 5: Construir o projeto (Build)
-      # Isso garante que o build passa antes da Vercel tentar o deploy
-      - name: Construir Projeto (Vite Build)
-        run: npm run build # Este é o comando padrão do Vite para build
-
-      # Passo 6: Instalar a Vercel CLI globalmente
-      - name: Instalar Vercel CLI
-        run: npm install -g vercel
-
-      # Passo 7: Iniciar o Deploy da Vercel
-      - name: Deploy para Vercel
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }} && vercel build --prod && vercel deploy --prod --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
-        # O comando acima está mais focado em 'push' para a main.
-        # Para um tratamento mais robusto de 'pull_request' e 'push':
-        
-      # Passo 8: Deploy com o action oficial da Vercel (Recomendado)
-      # Este Action faz a lógica de 'Preview' vs 'Production' automaticamente.
-      - name: Deploy com Vercel Action
-        uses: vercel/actions@v1
-        with:
-          # É o Token de Acesso Pessoal (Personal Access Token) da Vercel
-          token: ${{ secrets.VERCEL_TOKEN }} 
-          # ID da Organização da Vercel
-          vercel-org-id: ${{ env.VERCEL_ORG_ID }} 
-          # ID do Projeto da Vercel
-          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }} 
-          # Comando de build do seu projeto (opcional, o padrão é o detectado pela Vercel)
-          # build-command: 'npm run build' 
-          # Diretório onde está o projeto (se não for na raiz)
-          # root-directory: './'
