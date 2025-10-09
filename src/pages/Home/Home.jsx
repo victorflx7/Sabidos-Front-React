@@ -11,7 +11,11 @@ export default function Home() {
           Organize seus estudos <br /> de forma{" "}
           <span className="sublinhado">fácil</span>
         </p>
-        <Link to="/cadastro"></Link>
+        <Link to="/cadastro">
+        <button className='botao'>
+          Cadastre-se ! É grátis
+        </button>
+        </Link>
         <Link to="/login" className="sub">
           <br />
           Já tem uma conta? Entre !

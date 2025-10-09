@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './dashboard.css';
 import { Link } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { contarDocumentosPorUsuario, SomaTempoDasSeçõesPomo } from "../../services/firebaseService";
+//import { contarDocumentosPorUsuario, SomaTempoDasSeçõesPomo } from "../../services/firebaseService";
 
 const Dashboard = () => {
   const [userId, setUserId] = useState(null);

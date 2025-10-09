@@ -1,0 +1,195 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/public/fontes/FonteInter.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(145deg, #1b0f35 0%, #060423 100%);
+  color: #fff;
+  font-family: 'Inter';
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+}
+
+.cadastro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 60px;
+  gap: 22px;
+}
+
+.headerL {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logoL {
+  width: 400px;
+  height: auto;
+}
+
+.navv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  width: fit-content;
+  padding: 5px 5px;
+}
+
+.navv a,
+.navv .luz {
+  text-decoration: none;
+  font-weight: 600;
+  padding: 9px 28px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+#b1 {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+#b1:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+#b2.luz {
+  background-color: #f9c83b;
+  color: #000;
+  box-shadow: 0 0 16px rgba(249, 200, 59, 0.65);
+}
+
+#d1 {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  width: 360px;
+  padding: 38px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(8px);
+}
+
+.formcad {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inputL {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: none;
+  background-color: #f5f5f5;
+  font-size: 0.95rem;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.inputL::placeholder {
+  color: #888;
+}
+
+.inputL:focus {
+  outline: 2px solid #f9c83b;
+  background-color: #fff;
+}
+
+.inputL:disabled {
+  opacity: 0.6;
+}
+
+.buttonCC {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #3aa2c0;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.1s ease;
+}
+
+.buttonCC:hover {
+  background-color: #4bb6d8;
+  transform: scale(1.02);
+}
+
+.buttonCC:disabled {
+  background-color: #7b7b7b;
+  cursor: not-allowed;
+}
+
+.erro-message {
+  background-color: rgba(255, 80, 80, 0.12);
+  color: #ff8080;
+  border-left: 4px solid #ff4c4c;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.sucesso-message {
+  background-color: rgba(80, 255, 100, 0.1);
+  color: #58ff7f;
+  border-left: 4px solid #28d86b;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+#d4-cad {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #ddd;
+  line-height: 1.4;
+}
+
+#d4-cad a {
+  color: #f9c83b;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.google-placeholder {
+  color: #9aa3ff;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.dev-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #4bb6d8;
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+.dev-link:hover {
+  color: #66cce8;
+}

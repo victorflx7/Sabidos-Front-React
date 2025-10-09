@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom';
-import Login from '../Login/login.css';
+import './Login.css';
 
 
 function Login() {
