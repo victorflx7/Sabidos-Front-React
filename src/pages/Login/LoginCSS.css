@@ -9,16 +9,12 @@
     transform: translate(-50%);
 }
 
-/* .login-container {
-    height: 100vh;
-} */
 
 #login {
 
     position: absolute;
     left: 50%;
     transform: translate(-50%);
-    /* text-align: center; */
 
 }
 nav {
@@ -60,7 +56,6 @@ nav a {
     background: linear-gradient(90deg, rgba(48, 133, 170, 0.88) 0%, rgba(15, 78, 106, 0.88) 100%), #FFFDFD;
     border: none;
     color: rgb(255, 255, 255);
-    /* font-family: Inter; */
     font-size: 19.322px;
     font-style: normal;
     font-weight: 700;
