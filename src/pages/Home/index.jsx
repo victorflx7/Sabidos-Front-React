@@ -1,17 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "./Home.css";
 
 export default function Home() {
   return (
     <div className="container">
       <div className="bloco esquerda">
         <img src="frame2.svg" className="logo1" alt="Logo" />
-        <p className="texto1">
+        <p className="text-3xl">
           Organize seus estudos <br /> de forma{" "}
           <span className="sublinhado">fácil</span>
         </p>
-        <Link to="/cadastro"></Link>
+        <Link to="/cadastro">
+        <button className='botao bg-amber-300 hover:bg-amber-300'>
+          Cadastre-se ! É grátis
+        </button>
+        </Link>
         <Link to="/login" className="sub">
           <br />
           Já tem uma conta? Entre !

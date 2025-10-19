@@ -1,5 +1,5 @@
 import axios from "axios";
-import { auth } from "./firebase/firebaseConfig.js";
+import { auth } from "../firebase/FirebaseConfig";
 import { getIdToken } from "firebase/auth";
 
 const api = axios.create({
