@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../../firebase/FirebaseConfig";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
@@ -8,21 +8,25 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, senha);
       const token = await userCredential.user.getIdToken();
       localStorage.setItem("token", token);
-      alert('Login realizado com sucesso!');
-      navigate("/dashboard"); // página inicial após login
+      alert("Login realizado com sucesso!");
+      navigate("/dashboard");
     } catch (err) {
       setErro("E-mail ou senha inválidos.");
+    } finally {
+      setLoading(false);
     }
   };
 
-   const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -35,57 +39,92 @@ const LoginPage = () => {
   };
 
   return (
-
-    <div className="login-container">
-      <header className="headerL">
-        <img className="logoL" src="LogoLogin.svg" alt="logoExtensa" width="409px" height="153px" />
+    <div className="min-h-screen flex flex-col items-center text-white">
+      {/* Logo */}
+      <header className="mt-8">
+        <img
+          className="mx-auto w-[300px] md:w-[400px]"
+          src="LogoExtensa.svg"
+          alt="Logo Sabidos"
+        />
       </header>
-      <br />
-      <nav>
-        <a id="b1" className="luz">Login</a>
-        <Link to="/cadastro" id="b2">Cadastro</Link>
-      </nav>
-      <main id="login" >
-        <div id="d1">
-          <form onSubmit={handleEmailLogin} className='formlog'>
-            <input className="inputL" type="email" name="" id="" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input className="inputL" type="password" name="password" id="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
-            <button type="submit" className="buttonLL" disabled={loading}>
-              {loading ? 'Entrando....' : 'Entrar'}
-            </button>
-            {erro && <p className="erro">{erro}</p>}
-          </form>
-        </div>
 
+      {/* Navegação Login / Cadastro */}
+      <nav className="flex justify-center mt-6 bg-[#292535] rounded-xl px-1 py-1">
+        <span className="bg-[#FBCB4E] text-black px-5 py-2 rounded-xl font-semibold">
+          Login
+        </span>
+        <Link
+          to="/cadastro"
+          className="text-white px-5 py-2 rounded-xl hover:text-[#FBCB4E] transition"
+        >
+          Cadastro
+        </Link>
+      </nav>
+
+      {/* Formulário */}
+      <main className="flex flex-col items-center mt-8 w-full max-w-md">
+        <form
+          onSubmit={handleEmailLogin}
+          className="flex flex-col gap-4 w-full px-6"
+        >
+          <input
+            type="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
+          />
+
+          <input
+            type="password"
+            placeholder="Senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 mt-2 rounded-md font-bold text-white 
+              bg-gradient-to-r from-[#3085AA]/90 to-[#0F4E6A]/90
+              hover:opacity-90 transition-all"
+          >
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+
+          {erro && (
+            <p className="text-red-400 text-sm text-center mt-2">{erro}</p>
+          )}
+        </form>
+
+        {/* Login com Google */}
         <button
           onClick={handleGoogleLogin}
-          className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-all"
+          className="flex items-center justify-center gap-2 w-[90%] mt-6 border border-gray-400 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
         >
           <img
             src="https://www.svgrepo.com/show/355037/google.svg"
             alt="Google"
-            className="w-5 h-5 mr-2"
+            className="w-5 h-5"
           />
-          Entrar com Google
+          <span>Entrar com Google</span>
         </button>
 
-        
-        <div id="d3-log">
-        </div>
-        <div id="d4-log">
-          <p id="p">Ainda não possui uma conta?</p>
-        </div>
-        <div id="d5-log">
-
-          <Link to="/cadastro" id="a">Cadastre-se</Link>
-
+        {/* Cadastro link */}
+        <div className="mt-10 text-center">
+          <p className="text-white text-sm">Ainda não possui uma conta?</p>
+          <Link
+            to="/cadastro"
+            className="text-[#FBCB4E] font-semibold hover:underline"
+          >
+            Cadastre-se
+          </Link>
         </div>
       </main>
     </div>
-
-
-
-  )
-}
+  );
+};
 
 export default LoginPage;
