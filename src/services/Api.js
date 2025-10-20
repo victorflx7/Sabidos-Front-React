@@ -1,17 +1,22 @@
-import axios from "axios";
-import { auth } from "../firebase/FirebaseConfig";
-import { getIdToken } from "firebase/auth";
+export const API_BASE_URL = "http://localhost:5000/api"; // ajuste para sua API
 
-const api = axios.create({
-    baseURL: "https://localhost:5000/api",
-});
+export const fetchWithAuth = async (url, method = "GET", body = null) => {
+  const token = localStorage.getItem("token"); // idToken Firebase
 
-api.interceptors.request.use(async(config) => {
-    if (auth.currentUser){
-    const token = await getIdToken(auth.currentUser, true);
-    config.headers.Authorization = `Bearer ${token}`;
-}
-return config;
-});
+  if (!token) throw new Error("Usuário não autenticado.");
 
-export default api;
+  const res = await fetch(`${API_BASE_URL}/${url}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: body ? JSON.stringify(body) : null,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Erro: ${res.status}`);
+  }
+
+  return res.json();
+};
