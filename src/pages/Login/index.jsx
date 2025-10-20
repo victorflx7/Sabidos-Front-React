@@ -1,34 +1,4 @@
-// import React from 'react'
-// import { Link } from 'react-router-dom';
-
-
-// function Login() {
-//   const [email, setEmail] = useState('');
-//   const [senha, setSenha] = useState('');
-//   const [erro, setErro] = useState('');
-//   const navigate = useNavigate();
-//   const [loading, setLoading] = useState(false);
-
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setLoading(true);
-//     try {
-//       const result = await fazerLogin(email, senha);
-//       if (result.success) {
-
-
-//         alert('Login realizado com sucesso!');
-//         navigate('/dashboard');
-//       } else {
-//         setErro(result.error);
-//       }
-//     } catch (error) {
-//       setErro("Falha no login: " + error.message);
-//     }
-//   };
-
-  import React, { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
