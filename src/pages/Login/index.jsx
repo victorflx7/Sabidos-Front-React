@@ -22,6 +22,18 @@ const LoginPage = () => {
     }
   };
 
+   const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const token = await result.user.getIdToken();
+      localStorage.setItem("token", token);
+      navigate("/dashboard");
+    } catch (err) {
+      setErro("Erro ao logar com Google.");
+    }
+  };
+
   return (
 
     <div className="login-container">
@@ -45,6 +57,19 @@ const LoginPage = () => {
           </form>
         </div>
 
+        <button
+          onClick={handleGoogleLogin}
+          className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-all"
+        >
+          <img
+            src="https://www.svgrepo.com/show/355037/google.svg"
+            alt="Google"
+            className="w-5 h-5 mr-2"
+          />
+          Entrar com Google
+        </button>
+
+        
         <div id="d3-log">
         </div>
         <div id="d4-log">
