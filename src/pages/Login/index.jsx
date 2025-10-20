@@ -1,34 +1,26 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { auth } from "../../firebase/FirebaseConfig";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-
-function Login() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState('');
+const LoginPage = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
 
-
-  const handleSubmit = async (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const result = await fazerLogin(email, senha);
-      if (result.success) {
-
-
-        alert('Login realizado com sucesso!');
-        navigate('/dashboard');
-      } else {
-        setErro(result.error);
-      }
-    } catch (error) {
-      setErro("Falha no login: " + error.message);
+      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+      const token = await userCredential.user.getIdToken();
+      localStorage.setItem("token", token);
+      alert('Login realizado com sucesso!');
+      navigate("/dashboard"); // página inicial após login
+    } catch (err) {
+      setErro("E-mail ou senha inválidos.");
     }
   };
-
-  
 
   return (
 
@@ -43,7 +35,7 @@ function Login() {
       </nav>
       <main id="login" >
         <div id="d1">
-          <form onSubmit={handleSubmit} className='formlog'>
+          <form onSubmit={handleEmailLogin} className='formlog'>
             <input className="inputL" type="email" name="" id="" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
             <input className="inputL" type="password" name="password" id="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
             <button type="submit" className="buttonLL" disabled={loading}>
@@ -64,9 +56,11 @@ function Login() {
 
         </div>
       </main>
-
     </div>
+
+
+
   )
 }
 
-export default Login;
+export default LoginPage;

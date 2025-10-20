@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { db } from "../../firebase/FirebaseConfig";
-import AuthService from "../../services/authService";
 
 function Cadastro() {
   const [dadosUsuario, setDadosUsuario] = useState({
