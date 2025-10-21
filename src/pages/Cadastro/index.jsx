@@ -1,10 +1,10 @@
-import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { doc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../../firebase/FirebaseConfig";
 
-function Cadastro() {
+const Cadastro = () => {
   const [dadosUsuario, setDadosUsuario] = useState({
     nome: "",
     email: "",
@@ -15,50 +15,27 @@ function Cadastro() {
   const [sucesso, setSucesso] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isCadastro = location.pathname === "/cadastro";
 
   const validarFormulario = () => {
-    if (!dadosUsuario.nome.trim()) {
-      throw new Error("Por favor, informe seu nome");
-    }
-
-    if (!dadosUsuario.email.trim()) {
-      throw new Error("Por favor, informe seu email");
-    }
-
-    if (!dadosUsuario.email.includes("@")) {
-      throw new Error("Por favor, informe um email válido");
-    }
-
-    if (dadosUsuario.senha.length < 6) {
+    if (!dadosUsuario.nome.trim()) throw new Error("Informe seu nome");
+    if (!dadosUsuario.email.includes("@")) throw new Error("E-mail inválido");
+    if (dadosUsuario.senha.length < 6)
       throw new Error("A senha deve ter pelo menos 6 caracteres");
-    }
-
-    if (dadosUsuario.senha !== dadosUsuario.confirmarSenha) {
+    if (dadosUsuario.senha !== dadosUsuario.confirmarSenha)
       throw new Error("As senhas não coincidem");
-    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setErro("");
     setSucesso("");
+    setLoading(true);
 
     try {
-      console.log("🔄 Iniciando cadastro...");
-
       validarFormulario();
-
-      const userData = {
-        name: dadosUsuario.nome,
-        email: dadosUsuario.email,
-        password: dadosUsuario.senha,
-      };
-
-      const result = await AuthService.register(userData);
-
-      console.log("✅ Usuário cadastrado no Auth, salvando no Firestore...");
-
       const auth = getAuth();
       const user = auth.currentUser;
 
@@ -72,162 +49,115 @@ function Cadastro() {
           perfil: "estudante",
           ativo: true,
         });
-
-        console.log("✅ Dados salvos no Firestore com sucesso!");
-
-        setSucesso("🎉 Cadastro realizado com sucesso! Redirecionando...");
-
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 2000);
+        setSucesso("🎉 Cadastro realizado com sucesso!");
+        setTimeout(() => navigate("/dashboard"), 2000);
       } else {
-        throw new Error("Erro ao obter dados do usuário após cadastro");
+        throw new Error("Erro ao obter dados do usuário");
       }
-    } catch (error) {
-      console.error("❌ Erro no cadastro:", error);
-
-      let mensagemErro = error.message;
-
-      if (error.message.includes("email-already-in-use")) {
-        mensagemErro =
-          "Este email já está cadastrado. Faça login ou use outro email.";
-      } else if (error.message.includes("weak-password")) {
-        mensagemErro = "A senha é muito fraca. Use pelo menos 6 caracteres.";
-      } else if (error.message.includes("invalid-email")) {
-        mensagemErro = "Email inválido. Verifique o formato.";
-      } else if (error.message.includes("Este email já está cadastrado")) {
-        mensagemErro = error.message;
-      }
-
-      setErro(mensagemErro);
+    } catch (err) {
+      setErro(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (campo, valor) => {
-    setDadosUsuario((prev) => ({
-      ...prev,
-      [campo]: valor,
-    }));
-
+    setDadosUsuario((prev) => ({ ...prev, [campo]: valor }));
     if (erro) setErro("");
   };
 
   return (
-    <div className="cadastro-container">
-      <header className="headerL">
+    <div className="min-h-screen flex flex-col items-center text-white">
+      {/* Logo */}
+      <header className="mt-8">
         <img
-          className="logoL"
+          className="mx-auto w-[300px] md:w-[400px]"
           src="LogoExtensa.svg"
           alt="Logo Sabidos"
-          width="409px"
-          height="153px"
         />
       </header>
 
-      <br />
+      <nav className="flex justify-center mt-6 bg-[#292535] rounded-xl px-1 py-1">
+        <Link
+          to="/login"
+          className="text-white px-5 py-2 rounded-xl hover:text-[#FBCB4E] transition"
+        >
+          Login
+        </Link>
+        <span className="bg-[#FBCB4E] text-black px-5 py-2 rounded-xl font-semibold">
+          Cadastro
+        </span>
+      </nav>
 
-      <section>
-        <nav className="navv">
-          <Link to="/login" id="b1">
-            Login
-          </Link>
-          <a id="b2" className="luz">
-            Cadastro
-          </a>
-        </nav>
+      {/* Formulário */}
+      <main className="flex flex-col items-center mt-8 w-full max-w-md">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 w-full px-6"
+        >
+          <input
+            type="text"
+            placeholder="Usuário"
+            value={dadosUsuario.nome}
+            onChange={(e) => handleInputChange("nome", e.target.value)}
+            className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
+          />
+          <input
+            type="email"
+            placeholder="E-mail"
+            value={dadosUsuario.email}
+            onChange={(e) => handleInputChange("email", e.target.value)}
+            className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={dadosUsuario.senha}
+            onChange={(e) => handleInputChange("senha", e.target.value)}
+            className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
+          />
+          <input
+            type="password"
+            placeholder="Confirme sua senha"
+            value={dadosUsuario.confirmarSenha}
+            onChange={(e) =>
+              handleInputChange("confirmarSenha", e.target.value)
+            }
+            className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
+          />
 
-        <main id="cad" className="s">
-          <div id="d1">
-            <form onSubmit={handleSubmit} className="formcad">
-              <input
-                className="inputL"
-                type="text"
-                value={dadosUsuario.nome}
-                onChange={(e) => handleInputChange("nome", e.target.value)}
-                required
-                disabled={loading}
-                placeholder="Nome completo"
-                aria-label="Nome completo"
-              />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 mt-2 rounded-md font-bold text-white 
+              bg-gradient-to-r from-[#3085AA]/90 to-[#0F4E6A]/90
+              hover:opacity-90 transition-all"
+          >
+            {loading ? "Cadastrando..." : "Cadastrar"}
+          </button>
 
-              <input
-                className="inputL"
-                type="email"
-                value={dadosUsuario.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                required
-                disabled={loading}
-                placeholder="E-mail"
-                aria-label="E-mail"
-              />
+          {erro && (
+            <p className="text-red-400 text-sm text-center mt-2">{erro}</p>
+          )}
+          {sucesso && (
+            <p className="text-green-400 text-sm text-center mt-2">{sucesso}</p>
+          )}
+        </form>
 
-              <input
-                className="inputL"
-                type="password"
-                value={dadosUsuario.senha}
-                onChange={(e) => handleInputChange("senha", e.target.value)}
-                required
-                disabled={loading}
-                placeholder="Senha (mínimo 6 caracteres)"
-                aria-label="Senha"
-              />
-
-              <input
-                className="inputL"
-                type="password"
-                value={dadosUsuario.confirmarSenha}
-                onChange={(e) =>
-                  handleInputChange("confirmarSenha", e.target.value)
-                }
-                required
-                disabled={loading}
-                placeholder="Confirme sua senha"
-                aria-label="Confirme sua senha"
-              />
-
-              <div id="d2-cad">
-                {sucesso && <div className="sucesso-message">✅ {sucesso}</div>}
-
-                {erro && <div className="erro-message">❌ {erro}</div>}
-
-                <button
-                  type="submit"
-                  className="buttonCC"
-                  disabled={loading}
-                  aria-busy={loading}
-                >
-                  {loading ? "📝 Cadastrando..." : "🚀 Cadastrar"}
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <div id="d4-cad">
-            <p id="p">
-              Ao se cadastrar, você confirma que compreende e aceita
-              <br />
-              como nossa plataforma funciona.
-            </p>
-            <br />
-
-            <div className="google-placeholder">
-              🔄 Integração com Google Login em breve
-            </div>
-
-            <br />
-
-            {process.env.NODE_ENV === "development" && (
-              <Link to="/dashboard" className="dev-link">
-                [DEV] Acessar sem cadastro
-              </Link>
-            )}
-          </div>
-        </main>
-      </section>
+        <p className="text-xs text-gray-300 mt-4 text-center">
+          Ao criar uma conta, você concorda com os nossos{" "}
+          <span className="text-[#FBCB4E] cursor-pointer hover:underline">
+            Termos de serviço
+          </span>{" "}
+          e com a nossa{" "}
+          <span className="text-[#FBCB4E] cursor-pointer hover:underline">
+            Política de privacidade
+          </span>
+          .
+        </p>
+      </main>
     </div>
   );
-}
+};
 
 export default Cadastro;
