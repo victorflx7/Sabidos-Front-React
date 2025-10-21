@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../firebase";
-import { fetchWithAuth } from "../api";
+import { auth } from "../firebase/FirebaseConfig";
+import { fetchWithAuth } from "../services/Api";
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
