@@ -10,21 +10,37 @@ import Cadastro from "../pages/Cadastro";
 import Login from "../pages/Login";
 //import Flashcard from "../pages/Flashcard/Flashcard";
 import AccountLayout from "../layout/AccountLayout";
+import PrivateRoute from "./privateRoute";
 
 export function AppRoutes() {
   return (
-      <Routes>
-        <Route path="/home" element={<Home />} />
-        <Route path="/" element={<Home />} />
+ <Routes>
+      <Route path="/home" element={<Home />} />
+      <Route path="/" element={<Home />} />
 
-        <Route element={<AccountLayout />}>
-          <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="/login" element={<Login />} />
-        </Route>
+      <Route element={<AccountLayout />}>
+        <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/login" element={<Login />} />
+      </Route>
 
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-
+      <Route 
+        path="/dashboard" 
+        element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        } 
+      />
+      {/* <Route 
+        path="/perfil" 
+        element={
+          <PrivateRoute>
+            <ProfilePage />
+          </PrivateRoute>
+        } 
+      /> */}
+    </Routes>
+      
     /*
         <Route path="/Resumo" element={<Resumo />} />
         <Route path="/Agenda" element={<Agenda />} />
