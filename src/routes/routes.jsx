@@ -4,7 +4,7 @@ import Home from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
 //import Perfil from "../pages/Perfil/Perfil";
 //import Pomodoro from "../pages/Pomodoro/Pomodoro";
-//import Resumo from "../pages/Resumo/Resumo";
+import Resumo from "../pages/Resumo";
 //import SobreNos from "../pages/SobreNos/SobreNos";
 import Cadastro from "../pages/Cadastro";
 import Login from "../pages/Login";
@@ -26,9 +26,13 @@ export function AppRoutes() {
       <Route 
         path="/dashboard" 
         element={
-          <PrivateRoute>
             <Dashboard />
-          </PrivateRoute>
+        } 
+      />
+      <Route 
+        path="/Resumo"
+        element={
+            <Resumo />
         } 
       />
       {/* <Route 
@@ -41,9 +45,9 @@ export function AppRoutes() {
       /> */}
     </Routes>
       
-    /*
-        <Route path="/Resumo" element={<Resumo />} />
-        <Route path="/Agenda" element={<Agenda />} />
+    
+        
+        /*<Route path="/Agenda" element={<Agenda />} />
         <Route path="/Pomodoro" element={<Pomodoro />} />
         <Route path="/Perfil" element={<Perfil />} />
         <Route path="/Flashcard" element={<Flashcard />} />

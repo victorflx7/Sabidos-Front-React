@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+// src/pages/Dashboard.jsx
+import React, { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-//import { contarDocumentosPorUsuario, SomaTempoDasSeçõesPomo } from "../../services/firebaseService";
 
-const Dashboard = () => {
+
+export default function Dashboard() {
   const [userId, setUserId] = useState(null);
   const [totalResumos, setTotalResumos] = useState(0);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -13,117 +13,142 @@ const Dashboard = () => {
 
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
-        setUserId(null);
-      }
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) setUserId(user.uid);
+      else setUserId(null);
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  useEffect(() => {
-    const buscarDados = async () => {
+  /*useEffect(() => {
+    async function buscarDados() {
       if (!userId) return;
-
-      const [events, resumos, flashcards] = await Promise.all([
-        contarDocumentosPorUsuario("events", userId),
-        contarDocumentosPorUsuario("resumos", userId),
-        contarDocumentosPorUsuario("flashcards", userId),
-      ]);
-
-      setTotalEvents(events);
-      setTotalResumos(resumos);
-      setTotalFlashcards(flashcards);
-
-      const total = await SomaTempoDasSeçõesPomo(userId);
-      setTotalTrabalho(total);
-
-      setCarregando(false);
-    };
-
+      setCarregando(true);
+      try {
+        const [events, resumos, flashcards] = await Promise.all([
+          contarDocumentosPorUsuario("events", userId),
+          contarDocumentosPorUsuario("resumos", userId),
+          contarDocumentosPorUsuario("flashcards", userId),
+        ]);
+        setTotalEvents(events);
+        setTotalResumos(resumos);
+        setTotalFlashcards(flashcards);
+        const total = await SomaTempoDasSecoesPomo(userId);
+        setTotalTrabalho(total);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCarregando(false);
+      }
+    }
     buscarDados();
   }, [userId]);
 
-  if (carregando) {
-    return <div className="Dashboard">Carregando dados do usuário...</div>;
-  }
-
+  if (carregando)
+    return <div className="p-6 text-white">Carregando dados do usuário...</div>;
+*/
   return (
-    <div className='Dashboard'>
-      <div className='mensagemSabido'>
-        <img src='sabidoOfechado.svg' className='imgSabido' alt="Sabido" />
-        <div className='cont'>
-          <div className='cxpTxt'>
-            <p className='txtSabido'>Opa sabido! Já checou suas notas<br /> hoje?</p>
-            <p className='txtSabido'>Bons estudos, mantenha o foco.</p>
-          </div>
+    <div className="p-6 max-w-6xl mx-auto ">
+      <div className="flex items-center gap-6 mb-8">
+        <img src="SabidoOlhosFechados.svg" alt="Sabido" className="w-35" />
+        <div className="bg-[#292535] rounded-xl p-4 shadow-md">
+          <p className="text-white font-bold text-lg">
+            Opa sabido! Já checou suas notas hoje?
+          </p>
+          <p className="text-pink-300">
+            Bons estudos, mantenha o foco e continue aprendendo.
+          </p>
         </div>
       </div>
 
-      <div className='atEinf'>
-        <div className="atalhos">
-          <div className='contencao'>
-            <Link to='/Agenda'><div className="circulo circulo1"><img src="diario.svg" alt="icone 1" style={{ width: '28px' }} /></div></Link>
-            <Link to='/Resumo'><div className="circulo circulo2"><img src="notas.svg" alt="icone 2" style={{ width: '25px' }} /></div></Link>
-            <Link to='/Pomodoro'><div className="circulo circulo3"><img src="ampulheta.svg" alt="icone 3" style={{ width: '20px' }} /></div></Link>
-            <Link to='/Flashcard'><div className="circulo circulo4"><img src="caarta.svg" alt="icone 4" style={{ width: '28px' }} /></div></Link>
-            <Link to=''><div className="circulo circulo5"><img src="grupo.svg" alt="icone 5" style={{ width: '28px' }} /></div></Link>
-            <div className="circulo-central"><img src="sabidoOutline.svg" alt="icone central" style={{ width: '85px' }} /></div>
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* BLOCO CENTRAL */}
+        <div className="w-full lg:w-1/2 flex flex-col items-center">
+          <div className="relative bg-[#3B2868] rounded-2xl w-full max-w-md p-6 shadow-lg border-4 border-[#7763B3] flex flex-col items-center">
+            <img
+              src="/assets/sabidoOutline.svg"
+              alt="Mascote Sabido"
+              className="w-28 mb-4"
+            />
+            <h2 className="text-yellow-400 font-semibold text-lg mb-4">
+              Acesse suas áreas de estudo
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <a
+                href="/Agenda"
+                className="bg-[#423E51] hover:bg-[#564b6a] rounded-xl p-4 flex flex-col items-center justify-center transition-all shadow-md"
+              >
+                <span className="text-4xl mb-2">📔</span>
+                <span className="text-white font-semibold">Agenda</span>
+              </a>
+              <a
+                href="/Resumo"
+                className="bg-[#423E51] hover:bg-[#564b6a] rounded-xl p-4 flex flex-col items-center justify-center transition-all shadow-md"
+              >
+                <span className="text-4xl mb-2">📝</span>
+                <span className="text-white font-semibold">Resumos</span>
+              </a>
+              <a
+                href="/Pomodoro"
+                className="bg-[#423E51] hover:bg-[#564b6a] rounded-xl p-4 flex flex-col items-center justify-center transition-all shadow-md"
+              >
+                <span className="text-4xl mb-2">⏳</span>
+                <span className="text-white font-semibold">Pomodoro</span>
+              </a>
+              <a
+                href="/Flashcard"
+                className="bg-[#423E51] hover:bg-[#564b6a] rounded-xl p-4 flex flex-col items-center justify-center transition-all shadow-md"
+              >
+                <span className="text-4xl mb-2">🃏</span>
+                <span className="text-white font-semibold">Flashcards</span>
+              </a>
+            </div>
           </div>
         </div>
 
-
-        <div className="infos">
-          <div className="tempo_estudo">
-            <div className='contencao_svgte'>
-              <div className='blcsvg_do_te'>
-                <img src='clock.svg' className='clock'>
-                </img>
-              </div>
+        {/* BLOCO DE DADOS */}
+        <div className="w-full lg:w-1/2 space-y-4">
+          <div className="bg-[#292535] p-4 rounded-lg flex items-center gap-4">
+            <div className="w-20 h-20 rounded-lg bg-[#423E51] flex items-center justify-center">
+              <img
+                src="/assets/clock.svg"
+                alt="clock"
+                className="w-10 h-10"
+              />
             </div>
-            <div className='blc_do_te'>
-              <div className="text_estudo">Você estudou por:</div>
-              <div className="tempo_valor">{totalTrabalho}</div>
+            <div>
+              <div className="text-white">Você estudou por:</div>
+              <div className="text-4xl font-bold text-white">
+                {totalTrabalho}
+              </div>
             </div>
           </div>
 
-
-          <div className="estatisticas">
-            <div className="itens_ferramentas">
-              <div className="top-square">
-                <img src='notas.svg' className='notas'>
-                </img>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-[#423E51] p-4 rounded-lg text-center">
+              <div className="text-pink-300 mb-2 font-semibold">Notas</div>
+              <div className="text-3xl font-bold text-white">
+                {totalResumos}
               </div>
-              <div className="item-nome">Notas</div>
-              <div className="item-valor">{totalResumos}</div>
-            </div>
-            <div className="itens_ferramentas">
-              <div className="top-square">
-                <img src='caarta.svg' className='cards'>
-                </img>
-              </div>
-              <div className="item-nome">Eventos</div>
-              <div className="item-valor">{totalEvents}</div>
-            </div>
-            <div className="itens_ferramentas">
-              <div className="top-square">
-                <img src='caarta.svg' className='cards'>
-                </img>
-              </div>
-              <div className="item-nome">Cards</div>
-              <div className="item-valor">{totalFlashcards}</div>
             </div>
 
+            <div className="bg-[#423E51] p-4 rounded-lg text-center">
+              <div className="text-pink-300 mb-2 font-semibold">Eventos</div>
+              <div className="text-3xl font-bold text-white">
+                {totalEvents}
+              </div>
+            </div>
+
+            <div className="bg-[#423E51] p-4 rounded-lg text-center">
+              <div className="text-pink-300 mb-2 font-semibold">Cards</div>
+              <div className="text-3xl font-bold text-white">
+                {totalFlashcards}
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
   );
-};
-
-export default Dashboard;
-
+}
