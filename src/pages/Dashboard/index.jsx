@@ -71,9 +71,9 @@ export default function Dashboard() {
           {/* --- Esferas menores orbitando na base --- */}
           {[
             { to: "/Pomodoro", label: "🍅", angle: 5 },
-            { to: "/Flashcards", label: "🃏", angle: 50 },
+            { to: "/Flashcard", label: "🃏", angle: 50 },
             { to: "/SobreNos", label: "👥", angle: 90 },
-            { to: "/Resumos", label: "📝", angle: 130 },
+            { to: "/Resumo", label: "📝", angle: 130 },
             { to: "/Agenda", label: "📅", angle: 170 },
           ].map((item, index) => {
             // Cálculo trigonométrico para circular a base da esfera
