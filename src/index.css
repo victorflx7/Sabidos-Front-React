@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+body {
+  @apply bg-[#171621] min-h-screen;
+}
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
