@@ -57,9 +57,8 @@ export default function Dashboard() {
         {/* MENU DE ACESSO RÁPIDO */}
         <div className="relative w-[300px] h-[300px] flex items-center justify-center mx-auto">
           {/* esfera central */}
-          <Link
-            to="/Resumo"
-            className="absolute w-50 h-50 bg-[#3B2868] hover:bg-[#322159] transition-all rounded-full flex items-center justify-center shadow-xl border-4 border-[#7763B3] hover:border-[#5D45A7] hover:-translate-y-1"
+          <div
+            className="absolute w-50 h-50 bg-[#3B2868] hover:bg-[#322159] transition-all rounded-full flex items-center justify-center shadow-xl border-4 border-[#7763B3] hover:border-[#5D45A7]"
             style={{ transform: "translateY(-60px)" }}
           >
             <img
@@ -67,7 +66,7 @@ export default function Dashboard() {
               alt="Estudo"
               className="w-30"
             />
-          </Link>
+          </div>
 
           {/* --- Esferas menores orbitando na base --- */}
           {[
