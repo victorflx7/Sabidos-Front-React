@@ -12,11 +12,14 @@ import Login from "../pages/Login";
 import AccountLayout from "../layout/AccountLayout";
 import PrivateRoute from "./privateRoute";
 
+import Agenda from "../pages/Agenda/index";
+
 export function AppRoutes() {
   return (
  <Routes>
       <Route path="/home" element={<Home />} />
       <Route path="/" element={<Home />} />
+      <Route path="/agenda" element={<Agenda />} />
 
       <Route element={<AccountLayout />}>
         <Route path="/cadastro" element={<Cadastro />} />
