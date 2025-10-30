@@ -4,43 +4,34 @@ import Home from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
 //import Perfil from "../pages/Perfil/Perfil";
 //import Pomodoro from "../pages/Pomodoro/Pomodoro";
-//import Resumo from "../pages/Resumo/Resumo";
+import Resumo from "../pages/Resumo";
 //import SobreNos from "../pages/SobreNos/SobreNos";
 import Cadastro from "../pages/Cadastro";
 import Login from "../pages/Login";
 //import Flashcard from "../pages/Flashcard/Flashcard";
 import AccountLayout from "../layout/AccountLayout";
 import PrivateRoute from "./privateRoute";
+import Header from "../components/Header/Header";
+
 
 export function AppRoutes() {
   return (
- <Routes>
-      <Route path="/home" element={<Home />} />
-      <Route path="/" element={<Home />} />
+    <>
+      <Header />
+      <Routes>
+        <Route path="/home" element={<Home />} />
+        <Route path="/" element={<Home />} />
 
-      <Route element={<AccountLayout />}>
-        <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/login" element={<Login />} />
-      </Route>
+        <Route element={<AccountLayout />}>
+          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/login" element={<Login />} />
+        </Route>
 
-      <Route 
-        path="/dashboard" 
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        } 
-      />
-      {/* <Route 
-        path="/perfil" 
-        element={
-          <PrivateRoute>
-            <ProfilePage />
-          </PrivateRoute>
-        } 
-      /> */}
-    </Routes>
-      
+        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/Resumo" element={<Resumo />} />
+      </Routes>
+    </>
+
     /*
         <Route path="/Resumo" element={<Resumo />} />
         <Route path="/Agenda" element={<Agenda />} />
