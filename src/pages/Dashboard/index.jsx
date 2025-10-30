@@ -21,6 +21,7 @@ export default function Dashboard() {
   const totalFlashcards = 6;
   const totalEventos = 20;
   const totalTrabalho = "2H";
+  //Teste
 
   return (
     <div className="min-h-screen bg-[#171621] text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
