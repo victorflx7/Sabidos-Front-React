@@ -1,3 +1,4 @@
+// src/routes.jsx
 import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Home from "../pages/Home";
 //import Agenda from "../pages/Agenda/Agenda";
