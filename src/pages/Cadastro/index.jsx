@@ -200,7 +200,7 @@ const Cadastro = () => {
         </form>
 
           {/* Separador */}
-        <div className="flex items-center w-full px-6 mb-4">
+        <div className="flex items-center w-full px-6 mt-4">
             <div className="flex-grow border-t border-gray-600"></div>
             <span className="flex-shrink mx-4 text-gray-500">ou</span>
             <div className="flex-grow border-t border-gray-600"></div>
