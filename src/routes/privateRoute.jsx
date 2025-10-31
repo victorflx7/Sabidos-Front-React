@@ -1,14 +1,15 @@
-// src/components/PrivateRoute.jsx
+// components/PrivateRoute.jsx
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContexts";
 
 export default function PrivateRoute({ children }) {
-  const { currentUser, loading } = useAuth();
+  const { backendUser, loading, loginError } = useAuth();
 
-  if (loading) return <p>Carregando...</p>; // opcional: spinner
+  if (loading) return <p>Carregando...</p>;
 
-  if (!currentUser) {
-    return <Navigate to="/login" replace />; // redireciona se não estiver logado
+  // 🔐 Só permite acesso se usuário existe no SQL
+  if (!backendUser) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;
