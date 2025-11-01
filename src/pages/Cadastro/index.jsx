@@ -1,5 +1,5 @@
 // pages/Cadastro.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
 import { 
@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { db } from "../../firebase/FirebaseConfig";
 import { syncUserToBackend } from "../../services/Api"; 
+import { useAuth } from "../../context/AuthContexts";
 
 const Cadastro = () => {
   const [dadosUsuario, setDadosUsuario] = useState({
@@ -22,6 +23,15 @@ const Cadastro = () => {
   const [sucesso, setSucesso] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { backendUser } = useAuth();
+
+  // ✅ REDIRECIONAMENTO AUTOMÁTICO
+  useEffect(() => {
+    if (backendUser) {
+      console.log("✅ Usuário autenticado, redirecionando para dashboard...");
+      navigate("/dashboard");
+    }
+  }, [backendUser, navigate]);
 
   const validarFormulario = () => {
     if (!dadosUsuario.nome.trim()) throw new Error("Informe seu nome");
@@ -66,7 +76,7 @@ const Cadastro = () => {
       await syncUserToBackend(user, dadosUsuario.nome);
 
       setSucesso("🎉 Cadastro realizado com sucesso! Redirecionando...");
-      setTimeout(() => navigate("/dashboard"), 2000);
+      // O redirecionamento automático acontecerá pelo useEffect
 
     } catch (err) {
       console.error("❌ Erro no cadastro:", err);
@@ -110,11 +120,17 @@ const Cadastro = () => {
       await syncUserToBackend(user);
 
       setSucesso("🎉 Cadastro com Google realizado com sucesso!");
-      setTimeout(() => navigate("/dashboard"), 1000);
+      // O redirecionamento automático acontecerá pelo useEffect
 
     } catch (err) {
       console.error("❌ Erro no cadastro com Google:", err);
-      setErro("Erro ao cadastrar com Google. Tente novamente.");
+      if (err.code === "auth/popup-closed-by-user") {
+        setErro("Cadastro cancelado.");
+      } else if (err.code === "auth/popup-blocked") {
+        setErro("Popup bloqueado. Permita popups para este site.");
+      } else {
+        setErro("Erro ao cadastrar com Google. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
@@ -126,8 +142,7 @@ const Cadastro = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center text-white">
-      {/* ... (Header e Nav inalterados) ... */}
+    <div className="min-h-screen flex flex-col items-center text-white ">
       <header className="mt-8">
         <img
           className="mx-auto w-[300px] md:w-[400px]"
@@ -149,12 +164,13 @@ const Cadastro = () => {
       </nav>
 
       <main className="flex flex-col items-center mt-8 w-full max-w-md">
-        
+      
+
         {/* Formulário de Cadastro Manual */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full px-6">
           <input
             type="text"
-            placeholder="Usuário"
+            placeholder="Nome completo"
             value={dadosUsuario.nome}
             onChange={(e) => handleInputChange("nome", e.target.value)}
             className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
@@ -175,6 +191,7 @@ const Cadastro = () => {
             onChange={(e) => handleInputChange("senha", e.target.value)}
             className="w-full h-10 rounded-lg bg-gray-200 text-black px-4 text-sm focus:ring-2 focus:ring-[#3085AA] outline-none"
             required
+            minLength={6}
           />
           <input
             type="password"
@@ -189,16 +206,38 @@ const Cadastro = () => {
             type="submit"
             disabled={loading}
             className="w-full h-11 mt-2 rounded-md font-bold text-white 
-              bg-gradient-to-r from-[#3085AA]/90 to-[#0F4E6A]/90
-              hover:opacity-90 transition-all"
+              bg-gradient-to-r from-[#3085AA] to-[#0F4E6A]
+              hover:opacity-90 transition-all disabled:opacity-50"
           >
-            {loading ? "Cadastrando..." : "Cadastrar"}
+            {loading ? "Cadastrando..." : "Criar Conta"}
           </button>
 
-          {erro && <p className="text-red-400 text-sm text-center mt-2">{erro}</p>}
-          {sucesso && <p className="text-green-400 text-sm text-center mt-2">{sucesso}</p>}
+          {erro && (
+            <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-300 text-sm text-center">
+              {erro}
+            </div>
+          )}
+          
+          {sucesso && (
+            <div className="p-3 bg-green-500/20 border border-green-500 rounded-lg text-green-300 text-sm text-center">
+              {sucesso}
+            </div>
+          )}
         </form>
 
+        <p className="text-xs text-gray-300 mt-6 text-center px-4">
+          Ao criar uma conta, você concorda com os nossos{" "}
+          <span className="text-[#FBCB4E] cursor-pointer hover:underline">
+            Termos de serviço
+          </span>{" "}
+          e com a nossa{" "}
+          <span className="text-[#FBCB4E] cursor-pointer hover:underline">
+            Política de privacidade
+          </span>
+          .
+        </p>
+        
+        
           {/* Separador */}
         <div className="flex items-center w-full px-6 mt-4">
             <div className="flex-grow border-t border-gray-600"></div>
@@ -219,17 +258,14 @@ const Cadastro = () => {
           <span>Entrar com Google</span>
         </button>
 
-        <p className="text-xs text-gray-300 mt-4 text-center">
-          Ao criar uma conta, você concorda com os nossos{" "}
-          <span className="text-[#FBCB4E] cursor-pointer hover:underline">
-            Termos de serviço
-          </span>{" "}
-          e com a nossa{" "}
-          <span className="text-[#FBCB4E] cursor-pointer hover:underline">
-            Política de privacidade
-          </span>
-          .
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 text-sm">
+            Já tem uma conta?{" "}
+            <Link to="/login" className="text-[#FBCB4E] hover:underline font-semibold">
+              Fazer login
+            </Link>
+          </p>
+        </div>
       </main>
     </div>
   );

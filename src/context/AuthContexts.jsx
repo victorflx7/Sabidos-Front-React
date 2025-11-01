@@ -4,34 +4,56 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase/FirebaseConfig";
 import { validateLogin, syncUserToBackend } from "../services/Api";
 
+// ✅ CONTEXT COM VALOR PADRÃO MELHORADO
 const AuthContext = createContext({
   currentUser: null,
-  backendUser: null, // Dados do SQL
+  backendUser: null,
   loading: true,
   loginError: null,
   logout: () => {},
+  revalidate: () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [backendUser, setBackendUser] = useState(null); // Usuário no SQL
+  const [backendUser, setBackendUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loginError, setLoginError] = useState(null);
 
+  console.log("🔄 AuthContext - Estado atual:", {
+    currentUser: currentUser?.uid,
+    backendUser: !!backendUser,
+    loading,
+    loginError
+  });
+
   // 🔐 Função para validar usuário no backend
   const validateUserInBackend = async (user) => {
+    console.log("🎯 validateUserInBackend INICIADO para:", user.uid);
+    
     try {
       setLoginError(null);
+      console.log("📤 Enviando validação para API...");
+      
       const result = await validateLogin(user.uid, user.email);
+      console.log("📥 Resposta da API recebida:", result);
       
       if (result.success) {
+        console.log("✅ Validação bem-sucedida, definindo backendUser...");
         setBackendUser(result.user);
         localStorage.setItem("userAuthenticated", "true");
         localStorage.setItem("userData", JSON.stringify(result.user));
         console.log("✅ Usuário validado no backend com sucesso");
       } else {
+        console.warn("⚠️ Validação falhou:", result.message);
         throw new Error(result.message || "Falha na validação");
       }
     } catch (error) {
@@ -41,53 +63,62 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("userAuthenticated");
       localStorage.removeItem("userData");
       
-      // Desloga do Firebase se não for válido no backend
-      await signOut(auth);
+      // ❌ REMOVI o signOut automático - pode estar causando o problema
+      // await signOut(auth);
     }
   };
 
   useEffect(() => {
+    console.log("🔥 AuthContext useEffect INICIADO");
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("🎯 onAuthStateChanged DISPARADO:", user ? `Usuário: ${user.uid}` : "NULL");
+      
       setCurrentUser(user);
       setLoginError(null);
 
       if (user) {
-        // Usuário autenticado no Firebase - validar no backend
+        console.log("👤 Usuário Firebase detectado, validando backend...");
         await validateUserInBackend(user);
       } else {
-        // Logout - limpar tudo
+        console.log("🚪 Nenhum usuário, limpando estado...");
         setBackendUser(null);
-        setLoginError(null);
         localStorage.removeItem("userAuthenticated");
         localStorage.removeItem("userData");
       }
 
+      console.log("🏁 AuthStateChanged FINALIZADO, loading: false");
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      console.log("🧹 Cleanup AuthContext");
+      unsubscribe();
+    };
   }, []);
 
   const value = {
     currentUser,
-    backendUser, // Dados do SQL
+    backendUser,
     loading,
     loginError,
     logout: async () => {
       try {
+        console.log("🚪 Iniciando logout...");
         await signOut(auth);
-        console.log("Logout bem-sucedido.");
+        console.log("✅ Logout bem-sucedido.");
       } catch (error) {
-        console.error("Erro durante o logout:", error);
+        console.error("❌ Erro durante o logout:", error);
       }
     },
-    // 🔁 Função para forçar revalidação
     revalidate: async () => {
       if (currentUser) {
+        console.log("🔄 Revalidação manual solicitada");
         await validateUserInBackend(currentUser);
       }
     }
   };
 
+  console.log("🎨 AuthProvider renderizando com:", value);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

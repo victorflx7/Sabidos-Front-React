@@ -1,5 +1,5 @@
 // pages/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   signInWithEmailAndPassword, 
@@ -7,47 +7,57 @@ import {
   GoogleAuthProvider,
   signInWithPopup 
 } from "firebase/auth";
-import { auth } from "../../firebase/FirebaseConfig";
 import { useAuth } from "../../context/AuthContexts";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { loginError } = useAuth();
+  const { backendUser, loginError } = useAuth();
 
-  // 1. 🔐 Login Manual (E-mail/Senha)
+  // ✅ REDIRECIONAMENTO AUTOMÁTICO
+  useEffect(() => {
+    if (backendUser) {
+      console.log("✅ Usuário autenticado, redirecionando para dashboard...");
+      navigate("/dashboard");
+    }
+  }, [backendUser, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErro("");
     setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
-      console.log("✅ Login Firebase bem-sucedido, aguardando validação backend...");
-      
-      // O AuthContext automaticamente validará no backend e redirecionará
+      const auth = getAuth();
+      await signInWithEmailAndPassword(auth, email, senha);
+      // O redirecionamento acontecerá automaticamente pelo useEffect
     } catch (err) {
-      console.error("❌ Erro no login Firebase:", err);
-      // O AuthContext irá capturar o erro automaticamente
+      console.error("Erro no login:", err);
+      if (err.code === "auth/user-not-found") {
+        setErro("Usuário não encontrado.");
+      } else if (err.code === "auth/wrong-password") {
+        setErro("Senha incorreta.");
+      } else {
+        setErro("Erro ao fazer login. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. 🔐 Login com Google (APENAS LOGIN - não cria no SQL)
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       const auth = getAuth();
-      
       await signInWithPopup(auth, provider);
-      console.log("✅ Login Google bem-sucedido, aguardando validação backend...");
-      
-      // O AuthContext automaticamente validará no backend
+      // O redirecionamento acontecerá automaticamente pelo useEffect
     } catch (err) {
-      console.error("❌ Erro no login com Google:", err);
+      console.error("Erro no login com Google:", err);
+      setErro("Erro ao fazer login com Google. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -55,7 +65,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center text-white">
-      {/* ... (Header e Nav inalterados) ... */}
       <header className="mt-8">
         <img
           className="mx-auto w-[300px] md:w-[400px]"
@@ -77,8 +86,8 @@ const Login = () => {
       </nav>
 
       <main className="flex flex-col items-center mt-8 w-full max-w-md">
-      
-        {/* Formulário de Login Manual */}
+
+        
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full px-6">
           <input
             type="email"
@@ -107,9 +116,10 @@ const Login = () => {
             {loading ? "Entrando..." : "Entrar"}
           </button>
 
-          {/* Exibir erros do AuthContext */}
-          {loginError && (
-            <p className="text-red-400 text-sm text-center mt-2">{loginError}</p>
+          {(erro || loginError) && (
+            <p className="text-red-400 text-sm text-center mt-2">
+              {erro || loginError}
+            </p>
           )}
         </form>
 
@@ -118,16 +128,17 @@ const Login = () => {
           <span className="text-[#FBCB4E] cursor-pointer hover:underline">
             Clique aqui
           </span>
-          .
         </p>
-                {/* Separador */}
+
+        
+          {/* Separador */}
         <div className="flex items-center w-full px-6 mt-4">
             <div className="flex-grow border-t border-gray-600"></div>
             <span className="flex-shrink mx-4 text-gray-500">ou</span>
             <div className="flex-grow border-t border-gray-600"></div>
         </div>
 
-                {/* Botão de Login com Google */}
+          {/* Botão de Login com Google */}
         <button
           onClick={handleGoogleLogin}
           className="flex items-center justify-center gap-2 w-[90%] mt-6 border border-gray-400 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
@@ -139,7 +150,6 @@ const Login = () => {
           />
           <span>Entrar com Google</span>
         </button>
-
       </main>
     </div>
   );
