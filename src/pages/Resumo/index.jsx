@@ -20,8 +20,10 @@ const Resumo = () => {
   const [idEdicao, setIdEdicao] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [isListening, setIsListening] = useState(false);
+  const [resumoSelecionado, setResumoSelecionado] = useState(null);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [tamanhoFonte, setTamanhoFonte] = useState("base");
   const autosaveTimeout = useRef(null);
-
   const recognitionRef = useRef(null);
   const auth = getAuth();
   const user = auth.currentUser;
@@ -150,6 +152,48 @@ const Resumo = () => {
     setIdEdicao(null);
   };
 
+  const abrirModalResumo = (resumo) => {
+    setResumoSelecionado(resumo);
+    setModalAberto(true);
+  };
+
+  const fecharModal = () => {
+    setResumoSelecionado(null);
+    setModalAberto(false);
+  };
+
+  const copiarTexto = async () => {
+    if (resumoSelecionado) {
+      const textoCompleto = `${resumoSelecionado.titulo}\n\n${resumoSelecionado.descricao}`;
+      try {
+        await navigator.clipboard.writeText(textoCompleto);
+        alert("Texto copiado para a área de transferência!");
+      } catch (err) {
+        console.error("Erro ao copiar texto: ", err);
+        alert("Erro ao copiar texto");
+      }
+    }
+  };
+
+  const alternarTamanhoFonte = () => {
+    if (tamanhoFonte === "sm") setTamanhoFonte("base");
+    else if (tamanhoFonte === "base") setTamanhoFonte("lg");
+    else setTamanhoFonte("sm");
+  };
+
+  const getClasseTamanhoFonte = () => {
+    switch (tamanhoFonte) {
+      case "sm":
+        return "text-sm";
+      case "base":
+        return "text-base";
+      case "lg":
+        return "text-lg";
+      default:
+        return "text-base";
+    }
+  };
+
   // Auto save
   useEffect(() => {
     if (!titulo.trim() && !descricao.trim()) return;
@@ -240,6 +284,7 @@ const Resumo = () => {
                     <article
                       key={resumo.id}
                       className="bg-[#423E51] rounded-lg p-3 shadow-lg border-l-4 border-pink-300 hover:border-pink-400 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                      onClick={() => abrirModalResumo(resumo)}
                     >
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="text-[#FBCA4E] font-semibold text-base flex-1 mr-2">
@@ -250,24 +295,36 @@ const Resumo = () => {
                         </span>
                       </div>
                       <div className="mb-3">
-                        <p className="text-gray-200 text-sm line-clamp-3">
+                        <p className="text-gray-200 text-sm line-clamp-3 cursor-default select-none">
                           {resumo.descricao}
                         </p>
                       </div>
                       <div className="flex justify-end space-x-2">
                         <button
-                          onClick={() => editarResumo(resumo.id)}
-                          className="w-7 h-7 bg-[#FBCA4E] text-[#1D1B2A] rounded-full flex items-center justify-center hover:bg-[#DE9530] transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            editarResumo(resumo.id);
+                          }}
+                          className="w-7 h-7 bg-[#F29437] text-[#1D1B2A] rounded-full flex items-center justify-center hover:bg-[#D97818] transition-colors"
                           aria-label="Editar resumo"
                         >
-                          <i className="fas fa-edit text-xs"></i>
+                          <img
+                            src="IconesSVG/lapis.svg"
+                            alt="Editar resumo"
+                          />
                         </button>
                         <button
-                          onClick={() => deletarResumo(resumo.id)}
-                          className="w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deletarResumo(resumo.id);
+                          }}
+                          className="w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-[#A81F1F] transition-colors"
                           aria-label="Excluir resumo"
                         >
-                          <i className="fas fa-trash text-xs"></i>
+                          <img
+                            src="IconesSVG/lixeira.svg"
+                            alt="Deletar resumo"
+                          />
                         </button>
                       </div>
                     </article>
@@ -328,7 +385,7 @@ const Resumo = () => {
                   onClick={handleMicClick}
                   className={`w-full sm:w-32 px-4 py-3 rounded-lg font-semibold text-white transition-colors ${
                     isListening
-                      ? "bg-red-500 hover:bg-red-600"
+                      ? "bg-red-500 hover:bg-[#A81F1F]"
                       : "bg-green-500 hover:bg-green-600"
                   }`}
                 >
@@ -357,6 +414,88 @@ const Resumo = () => {
           </section>
         </div>
       </div>
+      {modalAberto && resumoSelecionado && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#292535] rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden border border-[#423E51]">
+            {/* Cabeçalho do Modal */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-600">
+              <h3 className="text-xl font-bold text-[#FBCA4E]">
+                {resumoSelecionado.titulo}
+              </h3>
+              <div className="flex items-center space-x-2">
+                <span className="bg-blue-800 text-white text-xs px-2 py-1 rounded-full">
+                  {resumoSelecionado.data}
+                </span>
+                <button
+                  onClick={fecharModal}
+                  className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-[#A81F1F] transition-colors"
+                  aria-label="Fechar"
+                >
+                  <img
+                    src="IconesSVG/X.svg"
+                    alt="Fechar visualização do resumo"
+                    className="w-5"
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo do Resumo */}
+            <div className="p-6 h-[400px]">
+              <div
+                className={`bg-[#1D1B2A] rounded-xl p-6 whitespace-pre-wrap break-words leading-relaxed ${getClasseTamanhoFonte()} overflow-y-auto h-full scrollbar-custom`}
+              >
+                {resumoSelecionado.descricao}
+              </div>
+            </div>
+
+            {/* Rodapé com Botões */}
+            <div className="flex justify-between items-center p-6 border-t border-gray-600">
+              {/* Botão de Tamanho de Fonte */}
+              <button
+                onClick={alternarTamanhoFonte}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                aria-label={`Alterar tamanho da fonte. Tamanho atual: ${
+                  tamanhoFonte === "sm"
+                    ? "Pequeno"
+                    : tamanhoFonte === "base"
+                    ? "Médio"
+                    : "Grande"
+                }`}
+              >
+                <img
+                  src="IconesSVG/TamanhoTexto.svg"
+                  alt="Alterar tamanho do Texto"
+                  className="w-7"
+                />
+                <span>Tamanho</span>
+              </button>
+
+              {/* Botões Copiar e Editar (já existem) */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={copiarTexto}
+                  className="bg-[#FBCA4E] text-[#1D1B2A] px-6 py-3 rounded-xl font-semibold hover:bg-[#DE9530] transition-colors flex items-center space-x-3"
+                >
+                  <i className="fas fa-copy"></i>
+                  <span>Copiar</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    editarResumo(resumoSelecionado.id);
+                    fecharModal();
+                  }}
+                  className="bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center space-x-3"
+                >
+                  <i className="fas fa-edit"></i>
+                  <span>Editar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
