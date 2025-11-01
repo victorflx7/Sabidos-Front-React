@@ -22,9 +22,9 @@ export function AppRoutes() {
  <Routes>
       <Route path="/home" element={<Home />} />
       <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/cadastro" element={<Cadastro />} />
 
-
-<<<<<<< HEAD
       <Route 
         path="/dashboard" 
         element={
@@ -41,6 +41,15 @@ export function AppRoutes() {
           </PrivateRoute>
           } />
 
+      <Route 
+        path="/resumo" 
+        element={
+          <PrivateRoute>
+            <Resumo />
+          </PrivateRoute>
+        } 
+      />
+      
       {/* <Route 
         path="/perfil" 
         element={
@@ -51,18 +60,7 @@ export function AppRoutes() {
       /> */}
     </Routes>
       
-=======
-        <Route element={<AccountLayout />}>
-          <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="/login" element={<Login />} />
-        </Route>
 
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/Resumo" element={<Resumo />} />
-      </Routes>
-    </>
-
->>>>>>> f74cdf363417ba0f78dd299a0dbfc2909ec03f58
     /*
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/Resumo" element={<Resumo />} />
