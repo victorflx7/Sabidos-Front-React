@@ -17,30 +17,17 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#171621] text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
-      {/* TOPO */}
-      <div className="w-full max-w-6xl flex items-center mb-10">
-        <div className="w-10 h-10"></div>
-
-        <div className="flex-1 text-center">
-          <h1 className="text-3xl font-semibold text-[#FBCB4E]">Dashboard</h1>
-        </div>
-
-        <div className="w-10 h-10 rounded-full bg-[#3B2868] border-1 border-[#7763B3] flex items-center justify-center ">
-          <img src="IconesSVG/sabidosOutline.svg" alt="Icone" className="w-8 h-8" />
-        </div>
-      </div>
-
       {/* MENSAGEM DO SABIDO */}
       <div className="w-full max-w-6xl flex items-center gap-5 mb-15">
         <img src="/sabidoOlhosFechados.svg" alt="Sabido" className="w-24" />
 
-        <div className="bg-[#292535] px-5 py-4 rounded-xl shadow-md">
+        <div className="bg-[#292535] px-5 py-4 rounded-xl shadow-md text-[#EAEAEA]">
           {/* ✅ USA O NOME DO SQL */}
           <p className="font-semibold">
             Opa {userName}! Já checou suas notas hoje?
           </p>
 
-          <p className="text-gray-300 text-sm">
+          <p className="text-[#AFAFAF] text-sm">
             Bons estudos, mantenha o foco.
           </p>
         </div>
@@ -67,7 +54,7 @@ export default function Dashboard() {
             { to: "/Pomodoro", label: "🍅", angle: 5 },
             { to: "/Flashcards", label: "🃏", angle: 50 },
             { to: "/SobreNos", label: "👥", angle: 90 },
-            { to: "/Resumos", label: "📝", angle: 130 },
+            { to: "/Resumo", label: "📝", angle: 130 },
             { to: "/Agenda", label: "📅", angle: 170 },
           ].map((item, index) => {
             const radius = 160;
@@ -90,9 +77,9 @@ export default function Dashboard() {
         </div>
 
         {/* BLOCO DE ESTATÍSTICAS */}
-        <div className="w-full max-w-sm bg-[#292535] rounded-2xl p-6 shadow-lg space-y-8">
+        <div className="w-full max-w-sm bg-[#292535] rounded-2xl p-6 shadow-lg space-y-8 text-[#EAEAEA]">
           <div className="bg-[#423E51] rounded-xl w-full p-5 flex flex-col items-center relative">
-            <div className="absolute -top-6 w-15 h-15 bg-[#3B2868] rounded-lg border-2 border-[#7A67B6] flex items-center justify-center">
+            <div className="absolute -top-6 w-15 h-15 bg-[#3B2868] rounded-lg border-2 border-[#7763B3] flex items-center justify-center">
               <span className="text-2xl">🍅</span>
             </div>
 
@@ -112,7 +99,7 @@ export default function Dashboard() {
                 key={i}
                 className="relative bg-[#423E51] rounded-xl p-4 pt-10 flex flex-col items-center justify-center"
               >
-                <div className="absolute -top-6 w-12 h-12 bg-[#3B2868] rounded-lg border-2 border-[#7A67B6] flex items-center justify-center">
+                <div className="absolute -top-6 w-12 h-12 bg-[#3B2868] rounded-lg border-2 border-[#7763B3] flex items-center justify-center">
                   <span className="text-2xl">{item.icon}</span>
                 </div>
                 
