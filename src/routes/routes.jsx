@@ -19,7 +19,6 @@ export function AppRoutes() {
  <Routes>
       <Route path="/home" element={<Home />} />
       <Route path="/" element={<Home />} />
-      <Route path="/agenda" element={<Agenda />} />
 
       <Route element={<AccountLayout />}>
         <Route path="/cadastro" element={<Cadastro />} />
@@ -34,6 +33,14 @@ export function AppRoutes() {
           </PrivateRoute>
         } 
       />
+
+        <Route 
+        path="/agenda" element={
+          <PrivateRoute>
+          <Agenda />
+          </PrivateRoute>
+          } />
+
       {/* <Route 
         path="/perfil" 
         element={
