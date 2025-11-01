@@ -8,7 +8,6 @@ export default function AccountLayout() {
       <main className="account-content-area">
         <Outlet />
       </main>
-      <Footer />
     </div>
   );
 }
