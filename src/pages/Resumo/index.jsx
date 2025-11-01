@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { getAuth } from "firebase/auth";
 import {
@@ -500,3 +501,4 @@ const Resumo = () => {
   );
 };
 export default Resumo;
+
