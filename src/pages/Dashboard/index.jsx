@@ -6,8 +6,11 @@ import { useAuth } from "../../context/AuthContexts.jsx";
 export default function Dashboard() {
   const { backendUser } = useAuth();
   
+  
   // ✅ Agora usa os dados do SQL via backendUser
   const userName = backendUser?.name?.split(' ')[0] || "Sabido";
+
+      
 
   // Dados de exemplo
   const totalResumos = 17;
