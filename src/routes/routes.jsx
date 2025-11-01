@@ -27,8 +27,23 @@ export function AppRoutes() {
           <Route path="/login" element={<Login />} />
         </Route>
 
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/Resumo" element={<Resumo />} />
+         <Route 
+        path="/dashboard" 
+        element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        } 
+      />
+       <Route 
+        path="/resumo" 
+        element={
+          <PrivateRoute>
+            <Resumo />
+          </PrivateRoute>
+        } 
+      />
+        
       </Routes>
     </>
 

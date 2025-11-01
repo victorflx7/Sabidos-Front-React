@@ -16,7 +16,7 @@ export default function Dashboard() {
   const totalTrabalho = "2H"; 
 
   return (
-    <div className="min-h-screen bg-[#171621] text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
+    <div className="min-h-screen  text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
       {/* MENSAGEM DO SABIDO */}
       <div className="w-full max-w-6xl flex items-center gap-5 mb-15">
         <img src="/sabidoOlhosFechados.svg" alt="Sabido" className="w-24" />
