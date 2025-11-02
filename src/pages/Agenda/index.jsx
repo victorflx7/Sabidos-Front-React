@@ -12,10 +12,13 @@ const AgendaPage = () => {
     const [eventTitle, setEventTitle] = useState("");
     const [eventDescription, setEventDescription] = useState("");
     const [eventLocation, setEventLocation] = useState("");
-    const [eventTime, setEventTime] = useState("14:00"); // Horário padrão
+    const [eventTime, setEventTime] = useState("00:00"); // Horário padrão
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [error, setError] = useState(""); 
+    const [editingEvent, setEditingEvent] = useState(null);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+
 
     // 🔄 Carregar eventos do usuário
     useEffect(() => {
@@ -96,12 +99,15 @@ const AgendaPage = () => {
                     }`}
                     onClick={() => handleDayClick(fullDate)}
                     title={dayEvents.length > 0 ? 
-                        `${dayEvents.length} evento(s): ${dayEvents.map(e => e.titleEvent).join(', ')}` : 
-                        `Clique para adicionar evento`}
+                        `${dayEvents.length} evento(s):\n\n${dayEvents.map(e => 
+              `• ${e.titleEvent}${e.localEvento ? `\n  📍 ${e.localEvento}` : ''}`
+            ).join('\n\n')}` : 
+            `✨ Clique para adicionar evento`}
+                        
                 >
                     {i}
                     {hasEvent && !isSelected && (
-                        <div className="absolute bottom-1 right-1 w-2 h-2 bg-[#FBCB4E] rounded-full"></div>
+                        <div className="relative left-1 bottom-3 w-2 h-2 bg-[#FBCB4E] rounded-full"></div>
                     )}
                     {isToday && !isSelected && (
                         <div className="absolute top-1 right-1 w-2 h-2 bg-[#FBCB4E] rounded-full"></div>
@@ -180,7 +186,7 @@ const AgendaPage = () => {
                 setEventTitle("");
                 setEventDescription("");
                 setEventLocation("");
-                setEventTime("14:00"); // Reset para horário padrão
+                setEventTime("00:00"); // Reset para horário padrão
                 // Recarrega a lista de eventos
                 await loadUserEvents();
             } else {
@@ -191,6 +197,52 @@ const AgendaPage = () => {
             setError(err.message || "Erro ao salvar evento");
         }
     };
+
+            // Função para abrir edição
+            const handleEditClick = (event) => {
+                setEditingEvent(event);
+                setEventTitle(event.titleEvent);
+                setEventDescription(event.descriptionEvent || "");
+                setEventLocation(event.localEvento || "");
+                setEventTime(new Date(event.dataEvento).toTimeString().slice(0, 5));
+                setSelectedDate(new Date(event.dataEvento));
+                setEditModalVisible(true);
+            };
+
+            // Função para salvar edição
+            const handleSaveEdit = async (e) => {
+                e.preventDefault();
+                
+                if (!currentUser?.uid || !editingEvent) return;
+
+                try {
+                    const fullDateTime = getFullDateTime();
+                    
+                    const eventoData = {
+                        TitleEvent: eventTitle,
+                        DataEvento: fullDateTime.toISOString(),
+                        DescriptionEvent: eventDescription || null,
+                        LocalEvento: eventLocation || null
+                    };
+
+                    const result = await EventoApi.updateEvento(editingEvent.id, eventoData, currentUser.uid);
+                    
+                    if (result.success) {
+                        setEditModalVisible(false);
+                        setEditingEvent(null);
+                        // Reset form
+                        setEventTitle("");
+                        setEventDescription("");
+                        setEventLocation("");
+                        setEventTime("00:00");
+                        // Recarrega eventos
+                        await loadUserEvents();
+                    }
+                } catch (err) {
+                    console.error("Erro ao editar evento:", err);
+                    setError(err.message || "Erro ao editar evento");
+                }
+            };
 
     const handleDeleteEvent = async (eventId) => {
         if (!currentUser?.uid || !window.confirm("Tem certeza que deseja excluir este evento?")) {
@@ -209,6 +261,18 @@ const AgendaPage = () => {
             setError("Erro ao excluir evento");
         }
     };
+
+        // 🆕 CANCELAR EDIÇÃO
+        const handleCancelEdit = () => {
+            setEditModalVisible(false);
+            setEditingEvent(null);
+            // Reset para valores padrão
+            setEventTitle("");
+            setEventDescription("");
+            setEventLocation("");
+            setEventTime("00:00");
+            setSelectedDate(new Date());
+        };
 
     const formatEventDate = (dateString) => {
         const date = new Date(dateString);
@@ -361,27 +425,41 @@ const AgendaPage = () => {
                                 .map((event) => (
                                 <div 
                                     key={event.id} 
-                                    className="p-4 rounded-xl bg-[#1a1a2e] shadow-md transition-all duration-300 hover:translate-x-1 hover:shadow-lg border-l-4 border-[#FBCB4E]"
+                                    className="p-4 rounded-xl bg-[#1a1a2e] shadow-md transition-all duration-300 hover:translate-x-1 hover:shadow-lg border-l-4 border-[#FBCB4E] group"
                                 >
                                     <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <span className="text-sm text-[#FBCB4E] mb-2 block">
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-lg text-[#FBCB4E] mb-2 block">
                                                 {formatEventDate(event.dataEvento)}
                                             </span>
-                                            <h4 className="text-lg font-semibold text-white m-0 mb-2">
+                                            <h4 className="text-xl font-semibold text-white m-0 mb-2">
                                                 {event.titleEvent}
                                             </h4>
-                                            {event.descriptionEvent && (
-                                                <p className="text-gray-300 text-sm m-0 mb-2">
-                                                    {event.descriptionEvent}
-                                                </p>
-                                            )}
-                                            {event.localEvento && (
-                                                <p className="text-gray-400 text-xs m-0 flex items-center gap-1">
-                                                    📍 {event.localEvento}
-                                                </p>
-                                            )}
+                                             {/* {(event.descriptionEvent || event.localEvento) && (
+                                            <span className="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded ml-2 transition-all duration-300 group-hover:text-[#FBCB4E] group-hover:bg-[#FBCB4E]/10 shrink-0">
+                                                ler mais
+                                            </span>
+                                        )} */}
+                                             {/* INFORMAÇÕES (se existirem) */}
+                                        {event.descriptionEvent && (
+                                            <p className="text-gray-300 text-sm m-0 mb-2 bg-blue-500/20 p-2 rounded  break-words whitespace-normal overflow-hidden">
+                                                📝 <strong>Descrição:</strong> {event.descriptionEvent}
+                                            </p>
+                                        )}
+                                        {event.localEvento && (
+                                            <p className="text-gray-400 text-xs m-0 flex items-center gap-1 bg-green-500/20 p-2 rounded break-words">
+                                                📍 <strong>Local:</strong> {event.localEvento}
+                                            </p>
+                                        )}
                                         </div>
+                                        <button
+                                            onClick={() => handleEditClick(event)}
+                                            className="text-blue-400 hover:text-blue-300 transition-colors duration-200 p-2"
+                                            title="Editar evento"
+                                        >
+                                                ✏️
+                                        </button>
+                                        
                                         <button
                                             onClick={() => handleDeleteEvent(event.id)}
                                             className="text-red-400 hover:text-red-300 transition-colors duration-200 ml-2 p-2"
@@ -520,6 +598,127 @@ const AgendaPage = () => {
                                 >
                                     Salvar Evento
                                 </button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                                {/* MODAL DE EDIÇÃO */}
+                {editModalVisible && editingEvent && (
+                    <div className="fixed z-[1000] left-0 top-0 w-full h-full bg-black/70 flex items-center justify-center transition-all duration-300">
+                        <div className="bg-[#292535] p-8 rounded-2xl shadow-2xl w-full max-w-md relative text-white">
+                            <span 
+                                className="absolute top-4 right-4 text-3xl cursor-pointer text-[#FBCB4E] transition-all duration-200 hover:rotate-90 hover:text-[#ffd86e]" 
+                                onClick={handleCancelEdit}
+                            >
+                                &times;
+                            </span>
+                            <h2 className="mt-0 text-[#FBCB4E] text-2xl font-semibold mb-6">
+                                Editar Evento
+                            </h2>
+                            
+                            {/* INFO DO EVENTO ORIGINAL */}
+                            <div className="mb-4 p-3 bg-[#1a1a2e] rounded-lg border-l-4 border-blue-500">
+                                <p className="text-sm text-blue-400 mb-1">Editando evento:</p>
+                                <p className="text-white font-semibold text-sm">
+                                    "{editingEvent.titleEvent}"
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Criado em: {new Date(editingEvent.createdAt).toLocaleDateString('pt-BR')}
+                                </p>
+                            </div>
+                            
+                            <form className="flex flex-col gap-4">
+                                <div>
+                                    <label htmlFor="edit-event-title" className="text-base font-semibold text-[#FBCB4E] text-left block mb-2">
+                                        Título do Evento *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="edit-event-title"
+                                        value={eventTitle}
+                                        onChange={(e) => setEventTitle(e.target.value)}
+                                        required
+                                        className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20"
+                                        placeholder="Ex: Reunião, Prova, Aniversário..."
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="edit-event-date" className="text-base font-semibold text-[#FBCB4E] text-left block mb-2">
+                                            Data
+                                        </label>
+                                        <input
+                                            type="date"
+                                            id="edit-event-date"
+                                            value={selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                                            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                                            className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="edit-event-time" className="text-base font-semibold text-[#FBCB4E] text-left block mb-2">
+                                            Horário
+                                        </label>
+                                        <select
+                                            id="edit-event-time"
+                                            value={eventTime}
+                                            onChange={(e) => setEventTime(e.target.value)}
+                                            className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20"
+                                        >
+                                            {generateTimeOptions()}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="edit-event-description" className="text-base font-semibold text-[#FBCB4E] text-left block mb-2">
+                                        Descrição (Opcional)
+                                    </label>
+                                    <textarea
+                                        id="edit-event-description"
+                                        value={eventDescription}
+                                        onChange={(e) => setEventDescription(e.target.value)}
+                                        rows="3"
+                                        className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20 resize-none"
+                                        placeholder="Detalhes do evento..."
+                                    />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="edit-event-location" className="text-base font-semibold text-[#FBCB4E] text-left block mb-2">
+                                        Local (Opcional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="edit-event-location"
+                                        value={eventLocation}
+                                        onChange={(e) => setEventLocation(e.target.value)}
+                                        className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20"
+                                        placeholder="Ex: Sala 305, Online, Biblioteca..."
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelEdit}
+                                        className="flex-1 p-3 rounded-lg border-2 border-gray-600 bg-transparent text-gray-300 text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-gray-600 hover:text-white"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveEdit}
+                                        disabled={!eventTitle}
+                                        className="flex-1 p-3 rounded-lg border-none bg-[#FBCB4E] text-[#292535] text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-[#ffd86e] disabled:bg-gray-500 disabled:cursor-not-allowed"
+                                    >
+                                        Salvar
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
