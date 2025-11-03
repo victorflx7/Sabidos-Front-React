@@ -1,7 +1,6 @@
-// services/EventoApi.js
 import { API_BASE_URL } from './Api';
 
-export const EventoApi = {
+export const EventoAPI = {
   // 📖 Buscar todos os eventos do usuário (CORRIGIDO)
   async getUserEventos(userUid) {
     const response = await fetch(`${API_BASE_URL}/eventos/user`, {
