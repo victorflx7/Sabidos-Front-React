@@ -1,171 +1,233 @@
-
+// pages/Resumos/ResumosPage.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { getAuth } from "firebase/auth";
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase/FirebaseConfig";
+import { useAuth } from "../../context/AuthContexts";
+import { ResumoAPI } from "../../services/ResumoAPI";
 
-const Resumo = () => {
+const ResumosPage = () => {
+  const { currentUser, backendUser } = useAuth();
+
   const [resumos, setResumos] = useState([]);
-  const [titulo, setTitulo] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [modoEdicao, setModoEdicao] = useState(false);
-  const [idEdicao, setIdEdicao] = useState(null);
-  const [carregando, setCarregando] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Estados do formulário
+  const [resumoTitulo, setResumoTitulo] = useState("");
+  const [resumoDescricao, setResumoDescricao] = useState("");
+  const [editingResumo, setEditingResumo] = useState(null);
+  const [selectedResumo, setSelectedResumo] = useState(null);
+
+  // Estados para funcionalidades extras
   const [isListening, setIsListening] = useState(false);
-  const [resumoSelecionado, setResumoSelecionado] = useState(null);
-  const [modalAberto, setModalAberto] = useState(false);
   const [tamanhoFonte, setTamanhoFonte] = useState("base");
-  const autosaveTimeout = useRef(null);
   const recognitionRef = useRef(null);
-  const auth = getAuth();
-  const user = auth.currentUser;
-  const userId = user?.uid;
 
+  // 🔄 Carregar resumos do usuário
   useEffect(() => {
-    if (userId) {
-      carregarResumos();
+    if (currentUser?.uid) {
+      loadUserResumos();
     }
-  }, [userId]);
+  }, [currentUser]);
 
-  const carregarResumos = async () => {
+  const loadUserResumos = async () => {
+    if (!currentUser?.uid) return;
+
+    setLoading(true);
+    setError("");
     try {
-      setCarregando(true);
-      const q = query(collection(db, "resumos"), where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
+      const result = await ResumoAPI.getUserResumos(currentUser.uid);
 
-      const resumosCarregados = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setResumos(resumosCarregados);
-    } catch (error) {
-      console.error("Erro ao carregar resumos: ", error);
-      alert("Ocorreu um erro ao carregar seus resumos");
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-
-    if (!titulo.trim()) {
-      alert("Por favor, insira um título para seu resumo");
-      return;
-    }
-
-    if (!descricao.trim()) {
-      alert("Por favor, insira o conteúdo do resumo");
-      return;
-    }
-
-    const dataAtual = formatarData(new Date());
-
-    try {
-      if (modoEdicao && idEdicao) {
-        await updateDoc(doc(db, "resumos", idEdicao), {
-          titulo,
-          descricao,
-          data: dataAtual,
-          atualizadoEm: new Date().toISOString(),
-        });
-
-        setResumos(
-          resumos.map((resumo) =>
-            resumo.id === idEdicao
-              ? { ...resumo, titulo, descricao, data: dataAtual }
-              : resumo
-          )
+      if (result.success) {
+        // Ordenar por data de criação (mais recentes primeiro)
+        const sortedResumos = result.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
+        setResumos(sortedResumos);
       } else {
-        const docRef = await addDoc(collection(db, "resumos"), {
-          userId,
-          titulo,
-          descricao,
-          data: dataAtual,
-          criadoEm: new Date().toISOString(),
-          atualizadoEm: new Date().toISOString(),
-        });
-
-        setResumos([
-          ...resumos,
-          {
-            id: docRef.id,
-            titulo,
-            descricao,
-            data: dataAtual,
-          },
-        ]);
+        setError(result.error || "Erro ao carregar resumos");
       }
-
-      resetarFormulario();
-    } catch (error) {
-      console.error("Erro ao salvar resumo: ", error);
-      alert("Ocorreu um erro ao salvar seu resumo");
+    } catch (err) {
+      console.error("Erro ao carregar resumos:", err);
+      setError("Falha ao carregar resumos");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deletarResumo = async (id) => {
-    if (!window.confirm("Tem certeza que deseja excluir este resumo?")) return;
+  const handleSave = async (e) => {
+    e.preventDefault();
+
+    if (!currentUser?.uid) {
+      setError("Usuário não autenticado");
+      return;
+    }
+
+    if (!resumoTitulo || !resumoDescricao) {
+      setError("Todos os campos são obrigatórios");
+      return;
+    }
 
     try {
-      await deleteDoc(doc(db, "resumos", id));
-      setResumos(resumos.filter((resumo) => resumo.id !== id));
-    } catch (error) {
-      console.error("Erro ao deletar resumo: ", error);
-      alert("Ocorreu um erro ao excluir o resumo");
+      setError("");
+
+      const resumoData = {
+        titulo: resumoTitulo,
+        descricao: resumoDescricao,
+      };
+
+      const result = await ResumoAPI.createResumo(resumoData, currentUser.uid);
+
+      if (result.success) {
+        setModalVisible(false);
+        resetForm();
+        await loadUserResumos();
+      } else {
+        setError(result.error || "Erro ao criar resumo");
+      }
+    } catch (err) {
+      console.error("Erro ao salvar resumo:", err);
+      setError(err.message || "Erro ao salvar resumo");
     }
   };
 
-  const editarResumo = (id) => {
-    const resumo = resumos.find((r) => r.id === id);
-    if (resumo) {
-      setTitulo(resumo.titulo);
-      setDescricao(resumo.descricao);
-      setModoEdicao(true);
-      setIdEdicao(id);
-      document
-        .querySelector(".editor-container")
-        ?.scrollIntoView({ behavior: "smooth" });
+  const handleEditClick = (resumo) => {
+    setEditingResumo(resumo);
+    setResumoTitulo(resumo.titulo);
+    setResumoDescricao(resumo.descricao);
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+
+    if (!currentUser?.uid || !editingResumo) return;
+
+    try {
+      const resumoData = {
+        titulo: resumoTitulo,
+        descricao: resumoDescricao,
+      };
+
+      const result = await ResumoAPI.updateResumo(
+        editingResumo.id,
+        resumoData,
+        currentUser.uid
+      );
+
+      if (result.success) {
+        setEditModalVisible(false);
+        setEditingResumo(null);
+        resetForm();
+        await loadUserResumos();
+      } else {
+        setError(result.error || "Erro ao editar resumo");
+      }
+    } catch (err) {
+      console.error("Erro ao editar resumo:", err);
+      setError(err.message || "Erro ao editar resumo");
     }
   };
 
-  const formatarData = (data) => {
-    const dia = data.getDate().toString().padStart(2, "0");
-    const mes = (data.getMonth() + 1).toString().padStart(2, "0");
-    return `${dia}/${mes}`;
+  const handleDeleteResumo = async (resumoId) => {
+    if (
+      !currentUser?.uid ||
+      !window.confirm("Tem certeza que deseja excluir este resumo?")
+    ) {
+      return;
+    }
+
+    try {
+      const result = await ResumoAPI.deleteResumo(resumoId, currentUser.uid);
+      if (result.success) {
+        await loadUserResumos();
+        if (selectedResumo?.id === resumoId) {
+          setSelectedResumo(null);
+          setViewModalVisible(false);
+        }
+      } else {
+        setError(result.error || "Erro ao excluir resumo");
+      }
+    } catch (err) {
+      console.error("Erro ao excluir resumo:", err);
+      setError("Erro ao excluir resumo");
+    }
   };
 
-  const resetarFormulario = () => {
-    setTitulo("");
-    setDescricao("");
-    setModoEdicao(false);
-    setIdEdicao(null);
+  const handleViewResumo = (resumo) => {
+    setSelectedResumo(resumo);
+    setViewModalVisible(true);
   };
 
-  const abrirModalResumo = (resumo) => {
-    setResumoSelecionado(resumo);
-    setModalAberto(true);
+  const handleCancelEdit = () => {
+    setEditModalVisible(false);
+    setEditingResumo(null);
+    resetForm();
   };
 
-  const fecharModal = () => {
-    setResumoSelecionado(null);
-    setModalAberto(false);
+  const resetForm = () => {
+    setResumoTitulo("");
+    setResumoDescricao("");
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  // Reconhecimento de voz
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn("Este navegador não suporta a Web Speech API");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          setResumoDescricao((prev) => prev + " " + transcript);
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      const liveTextDiv = document.getElementById("live-text");
+      if (liveTextDiv) liveTextDiv.innerText = interimTranscript;
+    };
+
+    recognitionRef.current = recognition;
+  }, []);
+
+  const handleMicClick = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      const liveTextDiv = document.getElementById("live-text");
+      if (liveTextDiv) liveTextDiv.innerText = "";
+      recognitionRef.current.start();
+    }
+    setIsListening(!isListening);
   };
 
   const copiarTexto = async () => {
-    if (resumoSelecionado) {
-      const textoCompleto = `${resumoSelecionado.titulo}\n\n${resumoSelecionado.descricao}`;
+    if (selectedResumo) {
+      const textoCompleto = `${selectedResumo.titulo}\n\n${selectedResumo.descricao}`;
       try {
         await navigator.clipboard.writeText(textoCompleto);
         alert("Texto copiado para a área de transferência!");
@@ -195,310 +257,349 @@ const Resumo = () => {
     }
   };
 
-  // Auto save
-  useEffect(() => {
-    if (!titulo.trim() && !descricao.trim()) return;
-
-    if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
-
-    autosaveTimeout.current = setTimeout(() => {
-      if (titulo.trim() && descricao.trim()) {
-        handleSubmit({ preventDefault: () => {} });
-      }
-    }, 15000);
-
-    return () => clearTimeout(autosaveTimeout.current);
-  }, [titulo, descricao]);
-
-  // Reconhecimento de voz
-  useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      console.warn("Este navegador não suporta a Web Speech API");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "pt-BR";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    recognition.onresult = (event) => {
-      let interimTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          setDescricao((prev) => prev + " " + transcript);
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-      const liveTextDiv = document.getElementById("live-text");
-      if (liveTextDiv) liveTextDiv.innerText = interimTranscript;
-    };
-
-    recognitionRef.current = recognition;
-  }, []);
-
-  const handleMicClick = () => {
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      const liveTextDiv = document.getElementById("live-text");
-      if (liveTextDiv) liveTextDiv.innerText = "";
-      recognitionRef.current.start();
-    }
-    setIsListening(!isListening);
-  };
-
   return (
-    <div className="min-h-screen text-white p-3 md:p-5">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 min-h-[350px]">
-          <aside className="lg:col-span-1 bg-[#292535] rounded-lg p-3 lg:p-4 shadow-xl border border-[#423E51] flex flex-col h-full order-2 lg:order-1">
-            <h2 className="text-xl font-bold text-[#FBCA4E] mb-4 pb-2 border-b border-gray-600">
-              Seus Resumos
-            </h2>
+    <div className="flex justify-center items-center min-h-screen w-full">
 
-            <div className="flex-1 overflow-y-auto">
-              {carregando ? (
-                <div className="text-center py-6 text-pink-200">
-                  Carregando...
-                </div>
-              ) : resumos.length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-pink-200 mb-3">Nenhum resumo encontrado</p>
-                  <button
-                    onClick={resetarFormulario}
-                    className="bg-[#FBCA4E] text-[#1D1B2A] px-4 py-2 rounded-lg font-semibold hover:bg-[#DE9530] transition-colors"
-                  >
-                    Criar primeiro resumo
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {resumos.map((resumo) => (
-                    <article
-                      key={resumo.id}
-                      className="bg-[#423E51] rounded-lg p-3 shadow-lg border-l-4 border-pink-300 hover:border-pink-400 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                      onClick={() => abrirModalResumo(resumo)}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-[#FBCA4E] font-semibold text-base flex-1 mr-2">
-                          {resumo.titulo}
-                        </h3>
-                        <span className="bg-blue-800 text-white text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                          {resumo.data}
-                        </span>
-                      </div>
-                      <div className="mb-3">
-                        <p className="text-gray-200 text-sm line-clamp-3 cursor-default select-none">
-                          {resumo.descricao}
-                        </p>
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            editarResumo(resumo.id);
-                          }}
-                          className="w-7 h-7 bg-[#F29437] text-[#1D1B2A] rounded-full flex items-center justify-center hover:bg-[#D97818] transition-colors"
-                          aria-label="Editar resumo"
-                        >
-                          <img
-                            src="IconesSVG/lapis.svg"
-                            alt="Editar resumo"
-                          />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deletarResumo(resumo.id);
-                          }}
-                          className="w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-[#A81F1F] transition-colors"
-                          aria-label="Excluir resumo"
-                        >
-                          <img
-                            src="IconesSVG/lixeira.svg"
-                            alt="Deletar resumo"
-                          />
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </aside>
+      <main className="flex flex-col lg:flex-row justify-center items-start p-4 lg:p-8 gap-8 w-full max-w-7xl mx-auto">
 
-          <section className="lg:col-span-2 bg-[#292535] rounded-lg p-3 lg:p-4 shadow-xl border border-[#423E51] flex flex-col h-full order-1 lg:order-2">
-            <h2 className="text-xl font-bold text-[#FBCA4E] mb-4 pb-2 border-b border-gray-600">
-              {modoEdicao ? "Editar Resumo" : "Novo Resumo"}
-            </h2>
+        {/* EDITOR DE RESUMOS */}
+        <div className="w-full max-w-sm sm:max-w-md lg:w-[480px] bg-[#292535] rounded-2xl shadow-xl overflow-hidden p-6">
+          <div className="flex justify-between items-center mb-6 pb-2 border-b-2 border-[#FBCB4E]">
+            <h3 className="text-xl font-semibold text-[#FBCB4E] m-0">
+              {editingResumo ? "Editar Resumo" : "Criar Resumo"}
+            </h3>
+          </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-              <div className="space-y-4 flex flex-col">
-                <div>
-                  <input
-                    type="text"
-                    className="w-full bg-[#1D1B2A] border border-gray-600 rounded-lg px-3 py-2 text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FBCA4E] focus:ring-1 focus:ring-[#FBCA4E] focus:ring-opacity-30 transition-all"
-                    placeholder="Título do resumo"
-                    value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
-                    maxLength={100}
-                  />
-                  <div className="flex justify-end mt-1">
-                    <small className="text-pink-200 text-xs">
-                      {titulo.length}/100
-                    </small>
-                  </div>
-                </div>
-
-                <div className="flex-1 lg:h-[300px]">
-                  <textarea
-                    className="w-full h-full bg-[#1D1B2A] border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#FBCA4E] focus:ring-1 focus:ring-[#FBCA4E] focus:ring-opacity-30 transition-all resize-none min-h-[200px] mb-30"
-                    placeholder="Digite o conteúdo do resumo aqui..."
-                    value={descricao}
-                    onChange={(e) => setDescricao(e.target.value)}
-                  />
-                </div>
-
-                {isListening && (
-                  <div className="p-3 bg-[#423E51] rounded-lg">
-                    <strong className="text-white text-sm font-semibold">
-                      Texto ao vivo:
-                    </strong>
-                    <div
-                      id="live-text"
-                      className="mt-2 bg-gray-600 text-gray-200 p-2 rounded min-h-[50px] text-sm"
-                    ></div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center mt-4 pt-4 border-t border-gray-600 mt-6">
-                <button
-                  type="button"
-                  onClick={handleMicClick}
-                  className={`w-full sm:w-32 px-4 py-3 rounded-lg font-semibold text-white transition-colors ${
-                    isListening
-                      ? "bg-red-500 hover:bg-[#A81F1F]"
-                      : "bg-green-500 hover:bg-green-600"
-                  }`}
-                >
-                  {isListening ? "Parar 🎤" : "Iniciar 🎤"}
-                </button>
-
-                <div className="flex gap-2 w-full sm:w-auto">
-                  {modoEdicao && (
-                    <button
-                      type="button"
-                      onClick={resetarFormulario}
-                      className="flex-1 sm:flex-none bg-gray-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-[#423E51] transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="flex-1 sm:flex-none bg-[#FBCA4E] text-[#1D1B2A] px-4 py-3 rounded-lg font-semibold hover:bg-[#DE9530] transition-colors"
-                  >
-                    {modoEdicao ? "Atualizar" : "Salvar"} Resumo
-                  </button>
-                </div>
-              </div>
-            </form>
-          </section>
-        </div>
-      </div>
-      {modalAberto && resumoSelecionado && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#292535] rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden border border-[#423E51]">
-            {/* Cabeçalho do Modal */}
-            <div className="flex justify-between items-center p-4 border-b border-gray-600">
-              <h3 className="text-xl font-bold text-[#FBCA4E]">
-                {resumoSelecionado.titulo}
-              </h3>
-              <div className="flex items-center space-x-2">
-                <span className="bg-blue-800 text-white text-xs px-2 py-1 rounded-full">
-                  {resumoSelecionado.data}
-                </span>
-                <button
-                  onClick={fecharModal}
-                  className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-[#A81F1F] transition-colors"
-                  aria-label="Fechar"
-                >
-                  <img
-                    src="IconesSVG/X.svg"
-                    alt="Fechar visualização do resumo"
-                    className="w-5"
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Conteúdo do Resumo */}
-            <div className="p-6 h-[400px]">
-              <div
-                className={`bg-[#1D1B2A] rounded-xl p-6 whitespace-pre-wrap break-words leading-relaxed ${getClasseTamanhoFonte()} overflow-y-auto h-full scrollbar-custom`}
+          <form className="flex flex-col gap-4">
+            <div>
+              <label
+                htmlFor="resumo-titulo"
+                className="text-base font-semibold text-[#FBCB4E] text-left block mb-2"
               >
-                {resumoSelecionado.descricao}
+                Título *
+              </label>
+              <input
+                type="text"
+                id="resumo-titulo"
+                value={resumoTitulo}
+                onChange={(e) => setResumoTitulo(e.target.value)}
+                required
+                className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20"
+                placeholder="Ex: Resumo de Matemática"
+                maxLength={100}
+              />
+              <div className="text-right text-xs text-gray-400 mt-1">
+                {resumoTitulo.length}/100
               </div>
             </div>
 
-            {/* Rodapé com Botões */}
-            <div className="flex justify-between items-center p-6 border-t border-gray-600">
-              {/* Botão de Tamanho de Fonte */}
+            <div>
+              <label
+                htmlFor="resumo-descricao"
+                className="text-base font-semibold text-[#FBCB4E] text-left block mb-2"
+              >
+                Conteúdo *
+              </label>
+              <textarea
+                id="resumo-descricao"
+                value={resumoDescricao}
+                onChange={(e) => setResumoDescricao(e.target.value)}
+                required
+                rows="8"
+                className="w-full p-3 rounded-lg border-2 border-gray-600 bg-[#1a1a2e] text-white text-base transition-all duration-300 focus:outline-none focus:border-[#FBCB4E] focus:ring-4 focus:ring-[#FBCB4E]/20 resize-none"
+                placeholder="Digite o conteúdo do seu resumo aqui..."
+              />
+            </div>
+
+            {isListening && (
+              <div className="p-3 bg-[#423E51] rounded-lg border-l-4 border-green-500">
+                <strong className="text-white text-sm font-semibold">
+                  🔊 Texto ao vivo:
+                </strong>
+                <div
+                  id="live-text"
+                  className="mt-2 bg-[#2A2438] text-gray-200 p-3 rounded text-sm min-h-[60px]"
+                ></div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 mt-4">
               <button
-                onClick={alternarTamanhoFonte}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                aria-label={`Alterar tamanho da fonte. Tamanho atual: ${
-                  tamanhoFonte === "sm"
-                    ? "Pequeno"
-                    : tamanhoFonte === "base"
-                    ? "Médio"
-                    : "Grande"
-                }`}
+                type="button"
+                onClick={() => setModalVisible(true)}
+                disabled={!resumoTitulo || !resumoDescricao}
+                className="flex-1 p-3 rounded-lg border-none bg-[#FBCB4E] text-[#292535] text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-[#ffd86e] hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:scale-100"
               >
-                <img
-                  src="IconesSVG/TamanhoTexto.svg"
-                  alt="Alterar tamanho do Texto"
-                  className="w-7"
-                />
-                <span>Tamanho</span>
+                {editingResumo ? "📝 Atualizar" : "💾 Salvar"} Resumo
               </button>
 
-              {/* Botões Copiar e Editar (já existem) */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={copiarTexto}
-                  className="bg-[#FBCA4E] text-[#1D1B2A] px-6 py-3 rounded-xl font-semibold hover:bg-[#DE9530] transition-colors flex items-center space-x-3"
-                >
-                  <i className="fas fa-copy"></i>
-                  <span>Copiar</span>
-                </button>
+              <button
+                type="button"
+                onClick={handleMicClick}
+                className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                  isListening
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-green-500 hover:bg-green-600 text-white"
+                }`}
+              >
+                {isListening ? "⏹️ Parar Gravação" : "🎤 Gravar com Voz"}
+              </button>
+            </div>
+          </form>
 
-                <button
-                  onClick={() => {
-                    editarResumo(resumoSelecionado.id);
-                    fecharModal();
-                  }}
-                  className="bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center space-x-3"
+          {/* DICAS */}
+          <div className="mt-6 p-4 bg-[#1a1a2e] rounded-lg border-l-4 border-[#3085AA]">
+            <h4 className="text-[#3085AA] font-semibold mb-2">
+              💡 Dicas para bons resumos
+            </h4>
+            <ul className="text-xs text-gray-400 space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="text-[#FBCB4E]">•</span>
+                <span>Use títulos claros e objetivos</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FBCB4E]">•</span>
+                <span>Organize o conteúdo em tópicos</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FBCB4E]">•</span>
+                <span>Destaque pontos importantes</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FBCB4E]">•</span>
+                <span>Use a gravação por voz para agilizar</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* LISTA DE RESUMOS */}
+        <div className="flex-1 w-full max-w-sm sm:max-w-md lg:max-w-none p-6 rounded-2xl bg-[#292535] shadow-xl max-h-[600px] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6 pb-2 border-b-2 border-[#FBCB4E]">
+            <h3 className="text-xl font-semibold text-[#FBCB4E] m-0">
+              📚 Meus Resumos
+            </h3>
+            <span className="text-sm text-gray-400 bg-[#1a1a2e] px-3 py-1 rounded-full">
+              {resumos.length} {resumos.length === 1 ? "resumo" : "resumos"}
+            </span>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-300 text-sm">
+              ❌ {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#FBCB4E] mb-4"></div>
+              <p className="text-gray-400 text-sm">
+                Carregando seus resumos...
+              </p>
+            </div>
+          ) : resumos.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {resumos.map((resumo) => (
+                <div
+                  key={resumo.id}
+                  className="p-4 rounded-xl bg-[#1a1a2e] shadow-md transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg border-l-4 border-[#FBCB4E] cursor-pointer group"
+                  onClick={() => handleViewResumo(resumo)}
                 >
-                  <i className="fas fa-edit"></i>
-                  <span>Editar</span>
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="text-lg font-semibold text-[#FBCB4E] m-0 flex-1 pr-2">
+                      {resumo.titulo}
+                    </h4>
+                    <span className="text-xs text-gray-400 bg-[#2A2438] px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                      📅 {formatDate(resumo.createdAt)}
+                    </span>
+                  </div>
+
+                  <div className="mb-4 min-h-[60px]">
+                    <p className="text-gray-300 text-sm m-0 line-clamp-3 leading-relaxed">
+                      {resumo.descricao}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-400 bg-[#2A2438] px-2 py-1 rounded">
+                      👆 Clique para ler
+                    </span>
+
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(resumo);
+                        }}
+                        className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors duration-200"
+                        title="Editar resumo"
+                      >
+                        ✏️
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteResumo(resumo.id);
+                        }}
+                        className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
+                        title="Excluir resumo"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">📝</div>
+              <p className="text-gray-400 text-lg mb-2">
+                Nenhum resumo encontrado
+              </p>
+              <p className="text-gray-500 text-sm">
+                Comece criando seu primeiro resumo usando o editor ao lado!
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* MODAL DE CRIAÇÃO/EDIÇÃO */}
+        {(modalVisible || editModalVisible) && (
+          <div className="fixed z-[1000] left-0 top-0 w-full h-full bg-black/70 flex items-center justify-center transition-all duration-300">
+            <div className="bg-[#292535] p-8 rounded-2xl shadow-2xl w-full max-w-2xl relative text-white">
+              <span
+                className="absolute top-4 right-4 text-3xl cursor-pointer text-[#FBCB4E] transition-all duration-200 hover:rotate-90 hover:text-[#ffd86e]"
+                onClick={
+                  editModalVisible
+                    ? handleCancelEdit
+                    : () => setModalVisible(false)
+                }
+              >
+                &times;
+              </span>
+              <h2 className="mt-0 text-[#FBCB4E] text-2xl font-semibold mb-6">
+                {editModalVisible
+                  ? "✏️ Confirmar Edição"
+                  : "📝 Confirmar Resumo"}
+              </h2>
+
+              <div className="mb-6 p-4 bg-[#1a1a2e] rounded-lg border-l-4 border-[#FBCB4E]">
+                <h3 className="text-lg font-semibold text-[#FBCB4E] mb-3">
+                  {resumoTitulo}
+                </h3>
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <span className="text-sm text-[#EBB2B6] font-semibold">
+                      📄 Conteúdo:
+                    </span>
+                    <div className="text-white text-sm mt-2 bg-[#2A2438] p-4 rounded-lg whitespace-pre-wrap max-h-[300px] overflow-y-auto leading-relaxed">
+                      {resumoDescricao}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={
+                    editModalVisible
+                      ? handleCancelEdit
+                      : () => setModalVisible(false)
+                  }
+                  className="flex-1 p-3 rounded-lg border-2 border-gray-600 bg-transparent text-gray-300 text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-gray-600 hover:text-white hover:border-gray-500"
+                >
+                  ↩️ Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={editModalVisible ? handleSaveEdit : handleSave}
+                  className="flex-1 p-3 rounded-lg border-none bg-[#FBCB4E] text-[#292535] text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-[#ffd86e] hover:scale-105"
+                >
+                  {editModalVisible ? "💾 Atualizar" : "💾 Salvar"}
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* MODAL DE VISUALIZAÇÃO */}
+        {viewModalVisible && selectedResumo && (
+          <div className="fixed z-[1000] left-0 top-0 w-full h-full bg-black/70 flex items-center justify-center transition-all duration-300 p-4">
+            <div className="bg-[#292535] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden relative text-white">
+              <span
+                className="absolute top-4 right-4 text-3xl cursor-pointer text-[#FBCB4E] transition-all duration-200 hover:rotate-90 hover:text-[#ffd86e] z-10"
+                onClick={() => setViewModalVisible(false)}
+              >
+                &times;
+              </span>
+
+              {/* Cabeçalho */}
+              <div className="p-6 border-b border-gray-600 bg-[#1a1a2e]">
+                <div className="flex justify-between items-start">
+                  <h2 className="text-2xl font-bold text-[#FBCB4E] m-0 pr-4">
+                    {selectedResumo.titulo}
+                  </h2>
+                  <span className="text-sm text-gray-400 bg-[#2A2438] px-3 py-2 rounded-full whitespace-nowrap flex-shrink-0">
+                    📅 {formatDate(selectedResumo.createdAt)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Conteúdo */}
+              <div className="p-6 max-h-[60vh] overflow-y-auto">
+                <div
+                  className={`bg-[#1a1a2e] rounded-xl p-6 whitespace-pre-wrap break-words leading-relaxed border-2 border-[#423E51] ${getClasseTamanhoFonte()}`}
+                >
+                  {selectedResumo.descricao}
+                </div>
+              </div>
+
+              {/* Rodapé com Ações */}
+              <div className="flex justify-between items-center p-6 border-t border-gray-600 bg-[#1a1a2e]">
+                <button
+                  onClick={alternarTamanhoFonte}
+                  className="bg-[#423E51] text-white px-4 py-2 rounded-lg hover:bg-[#4A4558] transition-colors flex items-center space-x-2 font-semibold"
+                >
+                  <span>🔠</span>
+                  <span>
+                    {tamanhoFonte === "sm"
+                      ? "Pequeno"
+                      : tamanhoFonte === "base"
+                      ? "Médio"
+                      : "Grande"}
+                  </span>
+                </button>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={copiarTexto}
+                    className="bg-[#FBCB4E] text-[#292535] px-6 py-2 rounded-lg font-semibold hover:bg-[#ffd86e] transition-colors flex items-center space-x-2"
+                  >
+                    <span>📋</span>
+                    <span>Copiar</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleEditClick(selectedResumo);
+                      setViewModalVisible(false);
+                    }}
+                    className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                  >
+                    <span>✏️</span>
+                    <span>Editar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };
-export default Resumo;
 
+export default ResumosPage;
