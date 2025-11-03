@@ -1,7 +1,7 @@
 // pages/Agenda/AgendaPage.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContexts";
-import { EventoAPI } from "../../services/EventoAPI";
+import { EventoAPI } from "../../services/EventoAPI.js";
 
 const AgendaPage = () => {
   const { currentUser, backendUser } = useAuth();
