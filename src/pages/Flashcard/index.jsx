@@ -1,10 +1,15 @@
 // pages/Flashcards/FlashcardsPage.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContexts";
-import { FlashCardAPI } from "../../services/FlashCardAPI";
+import { db } from "../../firebase/FirebaseConfig";
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const FlashcardsPage = () => {
   const { currentUser, backendUser } = useAuth();
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const userId = user?.uid;
 
   const [flashcards, setFlashcards] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -25,32 +30,36 @@ const FlashcardsPage = () => {
 
   // 🔄 Carregar flashcards do usuário
   useEffect(() => {
-    if (currentUser?.uid) {
+    if (userId) {
       loadUserFlashcards();
     }
-  }, [currentUser]);
+  }, [userId]);
 
   const loadUserFlashcards = async () => {
-    if (!currentUser?.uid) return;
+    if (!userId) return;
 
-    setLoading(true);
-    setError("");
     try {
-      const result = await FlashCardAPI.getUserFlashcards(currentUser.uid);
+      setLoading(true);
+      const q = query(collection(db, "flashcards"), where("userId", "==", userId));
 
-      if (result.success) {
-        // Ordenar por data de criação (mais recentes primeiro)
-        const sortedFlashcards = result.data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        setFlashcards(sortedFlashcards);
-      } else {
-        setError(result.error || "Erro ao carregar flashcards");
-      }
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const loadedCards = [];
+        querySnapshot.forEach((doc) => {
+          loadedCards.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        // Ordena por data de criação (mais novos primeiro)
+        loadedCards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setFlashcards(loadedCards);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
     } catch (err) {
       console.error("Erro ao carregar flashcards:", err);
       setError("Falha ao carregar flashcards");
-    } finally {
       setLoading(false);
     }
   };
@@ -58,7 +67,7 @@ const FlashcardsPage = () => {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    if (!currentUser?.uid) {
+    if (!userId) {
       setError("Usuário não autenticado");
       return;
     }
@@ -71,95 +80,68 @@ const FlashcardsPage = () => {
     try {
       setError("");
 
-      const flashcardData = {
-        title: flashcardTitle,
-        front: flashcardFront,
-        back: flashcardBack,
-      };
+      await addDoc(collection(db, "flashcards"), {
+        userId: userId,
+        titulo: flashcardTitle,
+        frente: flashcardFront,
+        verso: flashcardBack,
+        data: formatarData(new Date()),
+        createdAt: new Date().toISOString()
+      });
 
-      const result = await FlashCardAPI.createFlashcard(
-        flashcardData,
-        currentUser.uid
-      );
-
-      if (result.success) {
-        setModalVisible(false);
-        resetForm();
-        await loadUserFlashcards();
-      } else {
-        setError(result.error || "Erro ao criar flashcard");
-      }
+      setModalVisible(false);
+      resetForm();
     } catch (err) {
       console.error("Erro ao salvar flashcard:", err);
-      setError(err.message || "Erro ao salvar flashcard");
+      setError("Ocorreu um erro ao salvar o flashcard!");
     }
   };
 
   const handleEditClick = (flashcard) => {
     setEditingFlashcard(flashcard);
-    setFlashcardTitle(flashcard.title);
-    setFlashcardFront(flashcard.front);
-    setFlashcardBack(flashcard.back);
+    setFlashcardTitle(flashcard.titulo);
+    setFlashcardFront(flashcard.frente);
+    setFlashcardBack(flashcard.verso);
     setEditModalVisible(true);
   };
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-
-    if (!currentUser?.uid || !editingFlashcard) return;
+    
+    if (!userId || !editingFlashcard) return;
 
     try {
-      const flashcardData = {
-        title: flashcardTitle,
-        front: flashcardFront,
-        back: flashcardBack,
-      };
+      await updateDoc(doc(db, "flashcards", editingFlashcard.id), {
+        titulo: flashcardTitle,
+        frente: flashcardFront,
+        verso: flashcardBack,
+        data: formatarData(new Date()),
+        atualizadoEm: new Date().toISOString()
+      });
 
-      const result = await FlashCardAPI.updateFlashcard(
-        editingFlashcard.id,
-        flashcardData,
-        currentUser.uid
-      );
-
-      if (result.success) {
-        setEditModalVisible(false);
-        setEditingFlashcard(null);
-        resetForm();
-        await loadUserFlashcards();
-      } else {
-        setError(result.error || "Erro ao editar flashcard");
-      }
+      setEditModalVisible(false);
+      setEditingFlashcard(null);
+      resetForm();
     } catch (err) {
       console.error("Erro ao editar flashcard:", err);
-      setError(err.message || "Erro ao editar flashcard");
+      setError("Ocorreu um erro ao editar o flashcard!");
     }
   };
 
   const handleDeleteFlashcard = async (flashcardId) => {
-    if (
-      !currentUser?.uid ||
-      !window.confirm("Tem certeza que deseja excluir este flashcard?")
-    ) {
+    if (!userId || !window.confirm("Tem certeza que deseja excluir este flashcard?")) {
       return;
     }
 
     try {
-      const result = await FlashCardAPI.deleteFlashcard(
-        flashcardId,
-        currentUser.uid
-      );
-      if (result.success) {
-        await loadUserFlashcards();
-        if (selectedFlashcard?.id === flashcardId) {
-          setSelectedFlashcard(null);
-          setViewMode("grid");
-        }
-      } else {
-        setError(result.error || "Erro ao excluir flashcard");
+      await deleteDoc(doc(db, "flashcards", flashcardId));
+      if (selectedFlashcard?.id === flashcardId) {
+        setSelectedFlashcard(null);
+        setViewMode("grid");
       }
     } catch (err) {
       console.error("Erro ao excluir flashcard:", err);
-      setError("Erro ao excluir flashcard");
+      setError("Ocorreu um erro ao excluir o flashcard!");
     }
   };
 
@@ -199,6 +181,12 @@ const FlashcardsPage = () => {
     setFlippedCards(new Set());
   };
 
+  const formatarData = (date) => {
+    const dia = date.getDate().toString().padStart(2, '0');
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${dia}/${mes}`;
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR", {
@@ -218,7 +206,7 @@ const FlashcardsPage = () => {
         <div className="w-full max-w-sm sm:max-w-md lg:w-[480px] bg-[#292535] rounded-2xl shadow-xl overflow-hidden p-6">
           <div className="flex justify-between items-center mb-6 pb-2 border-b-2 border-[#FBCB4E]">
             <h3 className="text-xl font-semibold text-[#FBCB4E] m-0">
-              Criar Flashcard
+              {editingFlashcard ? "Editar Flashcard" : "Criar Flashcard"}
             </h3>
           </div>
 
@@ -287,7 +275,7 @@ const FlashcardsPage = () => {
               disabled={!flashcardTitle || !flashcardFront || !flashcardBack}
               className="w-full p-3 rounded-lg border-none bg-[#FBCB4E] text-[#292535] text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-[#ffd86e] disabled:bg-gray-500 disabled:cursor-not-allowed mt-4"
             >
-              Criar Flashcard
+              {editingFlashcard ? "Atualizar" : "Criar"} Flashcard
             </button>
           </form>
 
@@ -334,7 +322,7 @@ const FlashcardsPage = () => {
               </button>
               <div className="card-detalhado p-6 bg-[#1a1a2e] rounded-xl border-l-4 border-[#FBCB4E]">
                 <h2 className="text-2xl font-bold text-[#FBCB4E] mb-4">
-                  {selectedFlashcard.title}
+                  {selectedFlashcard.titulo}
                 </h2>
                 <div className="lados-card grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="lado-card">
@@ -342,7 +330,7 @@ const FlashcardsPage = () => {
                       Frente
                     </h3>
                     <div className="conteudo-card bg-[#2A2438] p-4 rounded-lg text-white leading-relaxed whitespace-pre-wrap">
-                      {selectedFlashcard.front}
+                      {selectedFlashcard.frente}
                     </div>
                   </div>
                   <div className="lado-card">
@@ -350,7 +338,7 @@ const FlashcardsPage = () => {
                       Verso
                     </h3>
                     <div className="conteudo-card bg-[#2A2438] p-4 rounded-lg text-white leading-relaxed whitespace-pre-wrap">
-                      {selectedFlashcard.back}
+                      {selectedFlashcard.verso}
                     </div>
                   </div>
                 </div>
@@ -373,10 +361,10 @@ const FlashcardsPage = () => {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h4 className="text-lg font-semibold text-[#FBCB4E] m-0 flex-1">
-                      {flashcard.title}
+                      {flashcard.titulo}
                     </h4>
                     <span className="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded">
-                      {formatDate(flashcard.createdAt)}
+                      {flashcard.data}
                     </span>
                   </div>
 
@@ -389,7 +377,7 @@ const FlashcardsPage = () => {
                       }`}
                     >
                       <p className="text-gray-300 text-sm m-0 line-clamp-3">
-                        {flashcard.front}
+                        {flashcard.frente}
                       </p>
                     </div>
                     <div
@@ -400,7 +388,7 @@ const FlashcardsPage = () => {
                       }`}
                     >
                       <p className="text-gray-300 text-sm m-0 line-clamp-3">
-                        {flashcard.back}
+                        {flashcard.verso}
                       </p>
                     </div>
                   </div>
@@ -472,7 +460,7 @@ const FlashcardsPage = () => {
                 &times;
               </span>
               <h2 className="mt-0 text-[#FBCB4E] text-2xl font-semibold mb-6">
-                Confirmar Flashcard
+                {editingFlashcard ? "Confirmar Edição" : "Confirmar Flashcard"}
               </h2>
 
               <div className="mb-6 p-4 bg-[#1a1a2e] rounded-lg border-l-4 border-[#FBCB4E]">
@@ -509,10 +497,10 @@ const FlashcardsPage = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={handleSave}
+                  onClick={editingFlashcard ? handleSaveEdit : handleSave}
                   className="flex-1 p-3 rounded-lg border-none bg-[#FBCB4E] text-[#292535] text-base font-semibold cursor-pointer transition-all duration-300 hover:bg-[#ffd86e]"
                 >
-                  Salvar
+                  {editingFlashcard ? "Atualizar" : "Salvar"}
                 </button>
               </div>
             </div>
@@ -538,10 +526,10 @@ const FlashcardsPage = () => {
                   Editando flashcard:
                 </p>
                 <p className="text-white font-semibold text-sm">
-                  "{editingFlashcard.title}"
+                  "{editingFlashcard.titulo}"
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Criado em: {formatDate(editingFlashcard.createdAt)}
+                  Criado em: {editingFlashcard.data}
                 </p>
               </div>
 
