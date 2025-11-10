@@ -9,7 +9,10 @@
   --text-primary: #EAEAEA;
   --text-secondary: #AFAFAF;
   --sabidinho-bg: #3B2868;
-
+  --color-red: #D6343B;
+  --color-blue: #1499E2;
+  --color-yellow: #f4cf63;
+  
   /* Animações */
   --animate-fadeIn: fadeIn 0.3s ease-in-out;
   --animate-moveBackground: moveBackground 6s ease-in-out infinite;
