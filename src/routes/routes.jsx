@@ -9,15 +9,15 @@ import Agenda from "../pages/Agenda";
 import Header from "../components/Header/Header";
 import Resumo from "../pages/Resumo";
 import Flashcard from "../pages/Flashcard"
+import Pomodoro from "../pages/Pomodoro"
 
 export function AppRoutes() {
   return (
     <>
       <Header />
       <Routes>
-        <Route path="/home" element={<Home />} />
         <Route path="/" element={<Home />} />
-
+        <Route path="/pomodoro" element={<Pomodoro />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/login" element={<Login />} />
 
