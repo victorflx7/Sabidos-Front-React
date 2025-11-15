@@ -1,25 +1,66 @@
 // pages/Dashboard.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContexts.jsx"; 
+import { useAuth } from "../../context/AuthContexts.jsx";
+import { PomodoroApi } from "../../services/PomodoroApi";
 
 export default function Dashboard() {
-  const { backendUser } = useAuth();
-  
-  
+  const { backendUser, currentUser } = useAuth();
+  const [pomodoroStats, setPomodoroStats] = useState({
+    totalStudyTime: 0,
+    totalSessions: 0,
+    loading: true
+  });
+
+  // ✅ Buscar dados reais do Pomodoro - AGORA COM COUNT-TIME
+  useEffect(() => {
+    const loadPomodoroStats = async () => {
+      if (!currentUser?.uid) return;
+      
+      try {
+        // ✅ AGORA USA getTotalTime() CORRETAMENTE
+        const totalTime = await PomodoroApi.getTotalTime(currentUser.uid);
+        
+        setPomodoroStats({
+          totalStudyTime: totalTime || 0,
+          totalSessions: 0, // Por enquanto não temos contagem de sessões
+          loading: false
+        });
+      } catch (error) {
+        console.error("Erro ao carregar stats do Pomodoro:", error);
+        setPomodoroStats(prev => ({ 
+          ...prev, 
+          loading: false 
+        }));
+      }
+    };
+
+    loadPomodoroStats();
+  }, [currentUser]);
+
   // ✅ Agora usa os dados do SQL via backendUser
   const userName = backendUser?.name?.split(' ')[0] || "Sabido";
 
-      
+  // ✅ Formatador de tempo melhorado
+  const formatStudyTime = (seconds) => {
+    if (!seconds || seconds === 0) return "0min";
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
 
-  // Dados de exemplo
+  // Dados de exemplo (substitua por dados reais quando tiver)
   const totalResumos = 17;
   const totalFlashcards = 6;
   const totalEventos = 20;
-  const totalTrabalho = "2H"; 
 
   return (
-    <div className="min-h-screen  text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
+    <div className="min-h-screen text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
       {/* MENSAGEM DO SABIDO */}
       <div className="w-full max-w-6xl flex items-center gap-5 mb-15">
         <img src="/sabidoOlhosFechados.svg" alt="Sabido" className="w-24" />
@@ -27,11 +68,15 @@ export default function Dashboard() {
         <div className="bg-[#292535] px-5 py-4 rounded-xl shadow-md text-[#EAEAEA]">
           {/* ✅ USA O NOME DO SQL */}
           <p className="font-semibold">
-            Opa {userName}! Já checou suas notas hoje?
+            Opa {userName}! {pomodoroStats.totalStudyTime > 0 
+              ? `Já estudou ${formatStudyTime(pomodoroStats.totalStudyTime)}!` 
+              : "Vamos começar a estudar?"}
           </p>
 
           <p className="text-[#AFAFAF] text-sm">
-            Bons estudos, mantenha o foco.
+            {pomodoroStats.totalStudyTime > 0 
+              ? "Continue assim! 🎯" 
+              : "Bons estudos, mantenha o foco."}
           </p>
         </div>
       </div>
@@ -81,6 +126,7 @@ export default function Dashboard() {
 
         {/* BLOCO DE ESTATÍSTICAS */}
         <div className="w-full max-w-sm bg-[#292535] rounded-2xl p-6 shadow-lg space-y-8 text-[#EAEAEA]">
+          {/* CARD PRINCIPAL DO POMODORO */}
           <div className="bg-[#423E51] rounded-xl w-full p-5 flex flex-col items-center relative">
             <div className="absolute -top-6 w-15 h-15 bg-[#3B2868] rounded-lg border-2 border-[#7763B3] flex items-center justify-center">
               <span className="text-2xl">🍅</span>
@@ -88,10 +134,16 @@ export default function Dashboard() {
 
             <p className="font-semibold text-sm mt-8">Você estudou por:</p>
             <p className="text-5xl font-extrabold mt-2 tracking-tight">
-              {totalTrabalho}
+              {pomodoroStats.loading ? "..." : formatStudyTime(pomodoroStats.totalStudyTime)}
+            </p>
+            <p className="text-sm text-gray-400 mt-2">
+              {pomodoroStats.totalStudyTime > 0 
+                ? "Tempo total de foco" 
+                : "Comece agora!"}
             </p>
           </div>
 
+          {/* CARDS SECUNDÁRIOS */}
           <div className="grid grid-cols-3 gap-4">
             {[
               { label: "Notas", value: totalResumos, icon: "📝" },

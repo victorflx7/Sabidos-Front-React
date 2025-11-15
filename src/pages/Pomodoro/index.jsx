@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContexts";
 import { PomodoroApi } from "../../services/PomodoroApi";
-import { FaPlay, FaPause, FaStop } from "react-icons/fa";
+import { FaPlay, FaPause, FaStop, FaCode } from "react-icons/fa";
+
 const ProgressoCircular = () => {
   const { currentUser } = useAuth();
 
@@ -22,6 +23,9 @@ const ProgressoCircular = () => {
   // Estatísticas
   const [temposTrabalho, setTemposTrabalho] = useState([]);
   const [temposDescanso, setTemposDescanso] = useState([]);
+
+  // Estado para modo desenvolvedor
+  const [modoDesenvolvedor, setModoDesenvolvedor] = useState(false);
 
   // Refs para áudio
   const audioFoco = useRef(null);
@@ -78,6 +82,111 @@ const ProgressoCircular = () => {
     temposDescanso,
     tempoDescansoLongo,
   ]);
+
+  // 🔧 NOVA FUNÇÃO: Criar sessão de teste para desenvolvedor
+  // No arquivo index.jsx, na função criarSessaoTeste:
+
+const criarSessaoTeste = async () => {
+  if (!currentUser?.uid) {
+    console.error("Usuário não autenticado");
+    return;
+  }
+
+  try {
+    console.log("🛠️ Criando sessão de teste para desenvolvedor...");
+
+    // Simula uma sessão completa de pomodoro com dados realistas
+    const tempoTrabalhoTeste = (entrada || 25) * 60; // em segundos
+    const tempoDescansoTeste = (tempoDescansoCurto || 5) * 60;
+    const tempoDescansoLongoTeste = (tempoDescansoLongo || 15) * 60;
+
+    // Calcula duração total simulando uma sessão completa
+    const duracaoTotal = 
+      (tempoTrabalhoTeste * ciclos) + 
+      (tempoDescansoTeste * (ciclos - 1)) + 
+      tempoDescansoLongoTeste;
+
+    const pomodoroData = {
+      Ciclos: ciclos,
+      Duration: duracaoTotal,
+      TempoTrabalho: tempoTrabalhoTeste,
+      TempoDescanso: tempoDescansoTeste,
+    };
+
+    const result = await PomodoroApi.createPomodoro(
+      pomodoroData,
+      currentUser.uid
+    );
+
+    if (result.success) {
+      console.log("✅ Sessão de teste criada com sucesso!", result.data);
+      
+      // Atualiza as estatísticas visuais
+      const temposTrabalhoTeste = Array(ciclos).fill(tempoTrabalhoTeste);
+      const temposDescansoTeste = Array(ciclos - 1).fill(tempoDescansoTeste);
+      
+      setTemposTrabalho(temposTrabalhoTeste);
+      setTemposDescanso(temposDescansoTeste);
+      
+      // ✅ CORREÇÃO: Mensagem de sucesso sem erro no console
+      setTimeout(() => {
+        alert(`✅ Sessão de teste criada com sucesso!\n\n` +
+              `Ciclos: ${ciclos}\n` +
+              `Duração total: ${Math.round(duracaoTotal / 60)} minutos\n` +
+              `Tempo de trabalho: ${entrada} min/ciclo\n` +
+              `Tempo de descanso: ${tempoDescansoCurto} min`);
+      }, 100);
+    } else {
+      console.error("❌ Erro ao criar sessão de teste:", result);
+      // ✅ CORREÇÃO: Mensagem de erro sem alerta vermelho
+      setTimeout(() => {
+        alert("❌ Erro ao criar sessão de teste. Verifique o console.");
+      }, 100);
+    }
+  } catch (error) {
+    console.error("❌ Erro ao criar sessão de teste:", error);
+    // ✅ CORREÇÃO: Mensagem de erro sem alerta vermelho
+    setTimeout(() => {
+      alert("❌ Erro ao criar sessão de teste. Verifique o console.");
+    }, 100);
+  }
+};
+
+  // 🔧 NOVA FUNÇÃO: Teste rápido (apenas 1 ciclo)
+  const testeRapido = async () => {
+    if (!currentUser?.uid) {
+      console.error("Usuário não autenticado");
+      return;
+    }
+
+    try {
+      console.log("⚡ Criando teste rápido...");
+
+      const pomodoroData = {
+        Ciclos: 1,
+        Duration: 1500, // 25 minutos em segundos
+        TempoTrabalho: 1500, // 25 minutos
+        TempoDescanso: 300, // 5 minutos
+      };
+
+      const result = await PomodoroApi.createPomodoro(
+        pomodoroData,
+        currentUser.uid
+      );
+
+      if (result.success) {
+        console.log("✅ Teste rápido criado com sucesso!", result.data);
+        
+        // Atualiza estatísticas visuais
+        setTemposTrabalho([1500]);
+        setTemposDescanso([]);
+        
+        alert("✅ Teste rápido criado com sucesso!\n1 ciclo de 25 minutos");
+      }
+    } catch (error) {
+      console.error("❌ Erro no teste rápido:", error);
+    }
+  };
 
   const iniciarNovaSessao = () => {
     // 1. Limpa a contagem da sessão anterior
@@ -280,6 +389,61 @@ const ProgressoCircular = () => {
 
   return (
     <div className="flex flex-col items-center min-h-[80vh] gap-8 py-12 px-3 bg-[#171621] h-screen">
+      {/* 🔧 BOTÃO PARA MODO DESENVOLVEDOR */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => setModoDesenvolvedor(!modoDesenvolvedor)}
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+          title="Modo Desenvolvedor"
+        >
+          <FaCode />
+          {modoDesenvolvedor ? "🔧" : "⚙️"}
+        </button>
+      </div>
+
+      {/* 🔧 PAINEL DE DESENVOLVEDOR */}
+      {modoDesenvolvedor && (
+        <div className="fixed top-20 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-lg z-50 max-w-xs">
+          <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+            <FaCode /> Modo Desenvolvedor
+          </h3>
+          
+          <div className="space-y-2">
+            <button
+              onClick={criarSessaoTeste}
+              className="w-full px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+            >
+              🧪 Criar Sessão Teste
+            </button>
+            
+            <button
+              onClick={testeRapido}
+              className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+            >
+              ⚡ Teste Rápido (1 ciclo)
+            </button>
+            
+            <button
+              onClick={() => {
+                setTemposTrabalho([]);
+                setTemposDescanso([]);
+                alert("Estatísticas resetadas!");
+              }}
+              className="w-full px-3 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm"
+            >
+              🔄 Resetar Estatísticas
+            </button>
+            
+            <div className="text-xs text-gray-300 mt-2 p-2 bg-gray-700 rounded">
+              <strong>Debug Info:</strong><br />
+              Ciclo: {cicloAtual + 1}/{ciclos}<br />
+              Trabalho: {temposTrabalho.length} sessões<br />
+              Descanso: {temposDescanso.length} sessões
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Configurações */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 items-center gap-4 mb-4 md:flex-row md:flex-wrap md:justify-center">
         {/* Bloco de Foco*/}

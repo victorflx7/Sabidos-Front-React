@@ -310,6 +310,7 @@ const AgendaPage = () => {
         }
         return times;
     };
+    
 
     return (
         <div className="flex justify-center items-center min-h-screen w-full bg-[#171621]">

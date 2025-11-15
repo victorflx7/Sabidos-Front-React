@@ -53,7 +53,14 @@ export const EventoApi = {
       },
       body: JSON.stringify({
         FirebaseUid: userUid,
-        EventoData: eventoData
+        EventoData: {
+            TitleEvent: eventoData.TitleEvent,
+            DataEvento: eventoData.DataEvento,
+            DescriptionEvent: eventoData.DescriptionEvent || null,
+            LocalEvento: eventoData.LocalEvento || null,
+            AuthorUid: userUid,
+            IsCompleted: false
+        }
       })
     });
     const result = await response.json();
