@@ -36,53 +36,61 @@ const ProgressoCircular = () => {
   // Carregar estatísticas do usuário
   useEffect(() => {}, [currentUser]);
 
-  useEffect(() => {
-    let intervalo = null;
+useEffect(() => {
+  let intervalo = null;
 
-    if (ativo && !pausado && tempo > 0) {
-      intervalo = setInterval(() => {
-        setTempo((t) => t - 1);
-      }, 1000);
-    } else if (tempo === 0 && ativo && !pausado) {
-      if (!modoDescanso) {
-        // Fim do tempo de trabalho
-        setTemposTrabalho([...temposTrabalho, tempoMaximo]);
-        iniciarDescanso();
+  if (ativo && !pausado && tempo > 0) {
+    intervalo = setInterval(() => {
+      setTempo((t) => t - 1);
+    }, 1000);
+  } else if (tempo === 0 && ativo && !pausado) {
+    if (!modoDescanso) {
+      // ✅ Fim do tempo de trabalho - APENAS ATUALIZA ESTADO
+      console.log("⏰ Tempo de trabalho terminou");
+      const novosTemposTrabalho = [...temposTrabalho, tempoMaximo];
+      setTemposTrabalho(novosTemposTrabalho);
+      
+      iniciarDescanso();
+    } else {
+      console.log("⏰ Tempo de descanso terminou");
+      const novosTemposDescanso = [...temposDescanso, tempoMaximo];
+      setTemposDescanso(novosTemposDescanso);
+
+      if (cicloAtual < ciclos - 1) {
+        // ✅ Continua para próximo ciclo - NÃO SALVA AINDA
+        iniciarFoco();
+        setCicloAtual(cicloAtual + 1);
       } else {
-        const novosTemposDescanso = [...temposDescanso, tempoMaximo];
-        setTemposDescanso(novosTemposDescanso);
+        const eDescansoLongo = tempoMaximo === (tempoDescansoLongo || 0) * 60;
 
-        if (cicloAtual < ciclos - 1) {
-          iniciarFoco();
-          setCicloAtual(cicloAtual + 1);
+        if (!eDescansoLongo) {
+          console.log("🚀 Iniciando descanso longo...");
+          iniciarDescansoLongo();
         } else {
-          const eDescansoLongo = tempoMaximo === (tempoDescansoLongo || 0) * 60;
-
-          if (!eDescansoLongo) {
-            iniciarDescansoLongo(temposTrabalho, novosTemposDescanso);
-          } else {
-            audioFim.current?.play();
-            console.log("Sessão Pomodoro completa. Resetando.");
-            resetar();
-          }
+          console.log("🎉 Sessão completa! Salvando e resetando...");
+          audioFim.current?.play();
+          
+          // ✅ SALVA APENAS AQUI NO FINAL DA SESSÃO COMPLETA
+          salvarDadosPomodoro();
+          resetar();
         }
       }
     }
+  }
 
-    return () => clearInterval(intervalo);
-  }, [
-    ativo,
-    pausado,
-    tempo,
-    cicloAtual,
-    ciclos,
-    modoDescanso,
-    tempoMaximo,
-    temposTrabalho,
-    temposDescanso,
-    tempoDescansoLongo,
-  ]);
-
+  return () => clearInterval(intervalo);
+}, [
+  ativo,
+  pausado,
+  tempo,
+  cicloAtual,
+  ciclos,
+  modoDescanso,
+  tempoMaximo,
+  temposTrabalho,
+  temposDescanso,
+  tempoDescansoLongo,
+]);
   // 🔧 NOVA FUNÇÃO: Criar sessão de teste para desenvolvedor
   // No arquivo index.jsx, na função criarSessaoTeste:
 
@@ -214,16 +222,14 @@ const criarSessaoTeste = async () => {
     setTempoMaximo(segundos);
     setModoDescanso(true);
   };
-
-  const iniciarDescansoLongo = async (trabalho, descanso) => {
+  const iniciarDescansoLongo = async () => {
+    console.log("🛌 Iniciando descanso longo...");
     audioLongo.current?.play();
     const segundos = (tempoDescansoLongo || 0) * 60;
     setTempo(segundos);
     setTempoMaximo(segundos);
     setModoDescanso(true);
-
-    // Salvar dados do pomodoro no backend (passando os dados corretos)
-    await salvarDadosPomodoro(trabalho, descanso);
+    
   };
 
   const resetar = () => {
@@ -253,34 +259,58 @@ const criarSessaoTeste = async () => {
     return `${minutos}m`;
   };
 
-  const salvarDadosPomodoro = async (
-    trabalho = temposTrabalho,
-    descanso = temposDescanso
-  ) => {
-    if (!currentUser?.uid) return;
+  const salvarDadosPomodoro = async () => {
+    if (!currentUser?.uid) {
+      console.log("❌ Usuário não autenticado, não foi possível salvar");
+      return;
+    }
 
     try {
-      const tempoTotalTrabalho = trabalho.reduce((acc, curr) => acc + curr, 0);
-      const tempoTotalDescanso = descanso.reduce((acc, curr) => acc + curr, 0);
+      const tempoTotalTrabalho = temposTrabalho.reduce((acc, curr) => acc + curr, 0);
+      const tempoTotalDescanso = temposDescanso.reduce((acc, curr) => acc + curr, 0);
       const duration = tempoTotalTrabalho + tempoTotalDescanso;
+
+      // ✅ VALIDAÇÃO: Só salva se tiver tempo de trabalho
+      if (tempoTotalTrabalho === 0) {
+        console.log("❌ Nenhum tempo de trabalho para salvar");
+        return;
+      }
 
       const pomodoroData = {
         Ciclos: ciclos,
-        Duration: duration,
-        TempoTrabalho: (entrada || 0) * 60,
-        TempoDescanso: (tempoDescansoCurto || 0) * 60,
+        Duration: duration, // ✅ DURAÇÃO TOTAL CORRETA
+        TempoTrabalho: (entrada || 0) * 60, // Tempo configurado por ciclo
+        TempoDescanso: (tempoDescansoCurto || 0) * 60, // Tempo configurado por descanso
       };
+
+      console.log("💾 Salvando sessão completa:", {
+        ciclosCompletos: temposTrabalho.length,
+        tempoTotalTrabalho: formatarTempoParaExibicao(tempoTotalTrabalho),
+        tempoTotalDescanso: formatarTempoParaExibicao(tempoTotalDescanso),
+        durationTotal: formatarTempoParaExibicao(duration),
+        dadosEnviados: pomodoroData
+      });
 
       const result = await PomodoroApi.createPomodoro(
         pomodoroData,
         currentUser.uid
       );
 
-      if (result.success) {
-        console.log("Pomodoro salvo com sucesso!");
+      if (result && result.id) {
+        console.log("✅ Sessão completa salva com sucesso! ID:", result.id);
+        
+        // ✅ FEEDBACK VISUAL
+        setTimeout(() => {
+          alert(`✅ Sessão completa salva!\n\n` +
+                `Ciclos: ${temposTrabalho.length}/${ciclos}\n` +
+                `Tempo total: ${formatarTempoParaExibicao(duration)}\n` +
+                `ID: ${result.id}`);
+        }, 500);
+      } else {
+        console.error("❌ Erro ao salvar sessão:", result);
       }
     } catch (error) {
-      console.error("Erro ao salvar pomodoro:", error);
+      console.error("❌ Erro ao salvar sessão:", error);
     }
   };
 
