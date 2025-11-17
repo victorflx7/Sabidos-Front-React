@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContexts.jsx";
 import { PomodoroApi } from "../../services/PomodoroApi";
+import { EventoApi } from "../../services/EventoApi";
 
 export default function Dashboard() {
   const { backendUser, currentUser } = useAuth();
@@ -11,19 +12,24 @@ export default function Dashboard() {
     totalSessions: 0,
     loading: true
   });
+  const [dashboardStats, setDashboardStats] = useState({
+    totalEventos: 0,
+    totalResumos: 17,
+    totalFlashcards: 6,
+    loading: true
+  });
 
-  // ✅ Buscar dados reais do Pomodoro - AGORA COM COUNT-TIME
+  // ✅ Buscar dados reais do Pomodoro
   useEffect(() => {
     const loadPomodoroStats = async () => {
       if (!currentUser?.uid) return;
       
       try {
-        // ✅ AGORA USA getTotalTime() CORRETAMENTE
         const totalTime = await PomodoroApi.getTotalTime(currentUser.uid);
         
         setPomodoroStats({
           totalStudyTime: totalTime || 0,
-          totalSessions: 0, // Por enquanto não temos contagem de sessões
+          totalSessions: 0,
           loading: false
         });
       } catch (error) {
@@ -38,10 +44,59 @@ export default function Dashboard() {
     loadPomodoroStats();
   }, [currentUser]);
 
-  // ✅ Agora usa os dados do SQL via backendUser
+  // ✅ Buscar contagem real de eventos - CORRIGIDO
+  useEffect(() => {
+    const loadEventosCount = async () => {
+      if (!currentUser?.uid) return;
+      
+      try {
+        const response = await EventoApi.getEventosCount(currentUser.uid);
+        
+        // ✅ CORREÇÃO: Extrair o valor numérico do response
+        let eventosCount = 0;
+        
+        if (response && typeof response === 'object') {
+          // Se a API retornar { success: true, data: 5 }
+          if (response.data !== undefined) {
+            eventosCount = response.data;
+          } 
+          // Se a API retornar { count: 5 }
+          else if (response.count !== undefined) {
+            eventosCount = response.count;
+          }
+          // Se a API retornar o número diretamente no objeto
+          else {
+            // Tenta encontrar qualquer valor numérico no objeto
+            const numericValues = Object.values(response).filter(val => typeof val === 'number');
+            eventosCount = numericValues.length > 0 ? numericValues[0] : 0;
+          }
+        } 
+        // Se for diretamente um número
+        else if (typeof response === 'number') {
+          eventosCount = response;
+        }
+        
+        console.log("✅ Contagem de eventos:", eventosCount);
+        
+        setDashboardStats(prev => ({
+          ...prev,
+          totalEventos: eventosCount,
+          loading: false
+        }));
+      } catch (error) {
+        console.error("Erro ao carregar contagem de eventos:", error);
+        setDashboardStats(prev => ({ 
+          ...prev, 
+          loading: false 
+        }));
+      }
+    };
+
+    loadEventosCount();
+  }, [currentUser]);
+
   const userName = backendUser?.name?.split(' ')[0] || "Sabido";
 
-  // ✅ Formatador de tempo melhorado
   const formatStudyTime = (seconds) => {
     if (!seconds || seconds === 0) return "0min";
     
@@ -54,11 +109,6 @@ export default function Dashboard() {
     return `${minutes}m`;
   };
 
-  // Dados de exemplo (substitua por dados reais quando tiver)
-  const totalResumos = 17;
-  const totalFlashcards = 6;
-  const totalEventos = 20;
-
   return (
     <div className="min-h-screen text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
       {/* MENSAGEM DO SABIDO */}
@@ -66,7 +116,6 @@ export default function Dashboard() {
         <img src="/sabidoOlhosFechados.svg" alt="Sabido" className="w-24" />
 
         <div className="bg-[#292535] px-5 py-4 rounded-xl shadow-md text-[#EAEAEA]">
-          {/* ✅ USA O NOME DO SQL */}
           <p className="font-semibold">
             Opa {userName}! {pomodoroStats.totalStudyTime > 0 
               ? `Já estudou ${formatStudyTime(pomodoroStats.totalStudyTime)}!` 
@@ -146,9 +195,13 @@ export default function Dashboard() {
           {/* CARDS SECUNDÁRIOS */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Notas", value: totalResumos, icon: "📝" },
-              { label: "Cards", value: totalFlashcards, icon: "🃏" },
-              { label: "Eventos", value: totalEventos, icon: "🗓️" },
+              { label: "Notas", value: dashboardStats.totalResumos, icon: "📝" },
+              { label: "Cards", value: dashboardStats.totalFlashcards, icon: "🃏" },
+              { 
+                label: "Eventos", 
+                value: dashboardStats.loading ? "..." : dashboardStats.totalEventos, 
+                icon: "🗓️" 
+              },
             ].map((item, i) => (
               <div
                 key={i}
