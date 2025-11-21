@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContexts.jsx";
 import { PomodoroApi } from "../../services/PomodoroApi";
-import { EventoApi } from "../../services/EventoApi.js";
+import { EventoApi } from "../../services/EventoApi2.js";
 
 export default function Dashboard() {
   const { backendUser, currentUser } = useAuth();
