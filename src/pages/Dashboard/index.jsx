@@ -1,37 +1,131 @@
 // pages/Dashboard.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContexts.jsx"; 
+import { useAuth } from "../../context/AuthContexts.jsx";
+import { PomodoroApi } from "../../services/PomodoroApi";
+import { EventoApi } from "../../services/EventoApi.js";
 
 export default function Dashboard() {
-  const { backendUser } = useAuth();
-  
-  
-  // ✅ Agora usa os dados do SQL via backendUser
+  const { backendUser, currentUser } = useAuth();
+  const [pomodoroStats, setPomodoroStats] = useState({
+    totalStudyTime: 0,
+    totalSessions: 0,
+    loading: true
+  });
+  const [dashboardStats, setDashboardStats] = useState({
+    totalEventos: 0,
+    totalResumos: 17,
+    totalFlashcards: 6,
+    loading: true
+  });
+
+  // ✅ Buscar dados reais do Pomodoro
+  useEffect(() => {
+    const loadPomodoroStats = async () => {
+      if (!currentUser?.uid) return;
+      
+      try {
+        const totalTime = await PomodoroApi.getTotalTime(currentUser.uid);
+        
+        setPomodoroStats({
+          totalStudyTime: totalTime || 0,
+          totalSessions: 0,
+          loading: false
+        });
+      } catch (error) {
+        console.error("Erro ao carregar stats do Pomodoro:", error);
+        setPomodoroStats(prev => ({ 
+          ...prev, 
+          loading: false 
+        }));
+      }
+    };
+
+    loadPomodoroStats();
+  }, [currentUser]);
+
+  // ✅ Buscar contagem real de eventos - CORRIGIDO
+  useEffect(() => {
+    const loadEventosCount = async () => {
+      if (!currentUser?.uid) return;
+      
+      try {
+        const response = await EventoApi.getEventosCount(currentUser.uid);
+        
+        // ✅ CORREÇÃO: Extrair o valor numérico do response
+        let eventosCount = 0;
+        
+        if (response && typeof response === 'object') {
+          // Se a API retornar { success: true, data: 5 }
+          if (response.data !== undefined) {
+            eventosCount = response.data;
+          } 
+          // Se a API retornar { count: 5 }
+          else if (response.count !== undefined) {
+            eventosCount = response.count;
+          }
+          // Se a API retornar o número diretamente no objeto
+          else {
+            // Tenta encontrar qualquer valor numérico no objeto
+            const numericValues = Object.values(response).filter(val => typeof val === 'number');
+            eventosCount = numericValues.length > 0 ? numericValues[0] : 0;
+          }
+        } 
+        // Se for diretamente um número
+        else if (typeof response === 'number') {
+          eventosCount = response;
+        }
+        
+        console.log("✅ Contagem de eventos:", eventosCount);
+        
+        setDashboardStats(prev => ({
+          ...prev,
+          totalEventos: eventosCount,
+          loading: false
+        }));
+      } catch (error) {
+        console.error("Erro ao carregar contagem de eventos:", error);
+        setDashboardStats(prev => ({ 
+          ...prev, 
+          loading: false 
+        }));
+      }
+    };
+
+    loadEventosCount();
+  }, [currentUser]);
+
   const userName = backendUser?.name?.split(' ')[0] || "Sabido";
 
-      
-
-  // Dados de exemplo
-  const totalResumos = 17;
-  const totalFlashcards = 6;
-  const totalEventos = 20;
-  const totalTrabalho = "2H"; 
+  const formatStudyTime = (seconds) => {
+    if (!seconds || seconds === 0) return "0min";
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
 
   return (
-    <div className="min-h-screen  text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
+    <div className="min-h-screen text-white flex flex-col items-center py-3 px-4 relative overflow-hidden">
       {/* MENSAGEM DO SABIDO */}
       <div className="w-full max-w-6xl flex items-center gap-5 mb-15">
         <img src="/sabidoOlhosFechados.svg" alt="Sabido" className="w-24" />
 
         <div className="bg-[#292535] px-5 py-4 rounded-xl shadow-md text-[#EAEAEA]">
-          {/* ✅ USA O NOME DO SQL */}
           <p className="font-semibold">
-            Opa {userName}! Já checou suas notas hoje?
+            Opa {userName}! {pomodoroStats.totalStudyTime > 0 
+              ? `Já estudou ${formatStudyTime(pomodoroStats.totalStudyTime)}!` 
+              : "Vamos começar a estudar?"}
           </p>
 
           <p className="text-[#AFAFAF] text-sm">
-            Bons estudos, mantenha o foco.
+            {pomodoroStats.totalStudyTime > 0 
+              ? "Continue assim! 🎯" 
+              : "Bons estudos, mantenha o foco."}
           </p>
         </div>
       </div>
@@ -81,6 +175,7 @@ export default function Dashboard() {
 
         {/* BLOCO DE ESTATÍSTICAS */}
         <div className="w-full max-w-sm bg-[#292535] rounded-2xl p-6 shadow-lg space-y-8 text-[#EAEAEA]">
+          {/* CARD PRINCIPAL DO POMODORO */}
           <div className="bg-[#423E51] rounded-xl w-full p-5 flex flex-col items-center relative">
             <div className="absolute -top-6 w-15 h-15 bg-[#3B2868] rounded-lg border-2 border-[#7763B3] flex items-center justify-center">
               <span className="text-2xl">🍅</span>
@@ -88,15 +183,25 @@ export default function Dashboard() {
 
             <p className="font-semibold text-sm mt-8">Você estudou por:</p>
             <p className="text-5xl font-extrabold mt-2 tracking-tight">
-              {totalTrabalho}
+              {pomodoroStats.loading ? "..." : formatStudyTime(pomodoroStats.totalStudyTime)}
+            </p>
+            <p className="text-sm text-gray-400 mt-2">
+              {pomodoroStats.totalStudyTime > 0 
+                ? "Tempo total de foco" 
+                : "Comece agora!"}
             </p>
           </div>
 
+          {/* CARDS SECUNDÁRIOS */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Notas", value: totalResumos, icon: "📝" },
-              { label: "Cards", value: totalFlashcards, icon: "🃏" },
-              { label: "Eventos", value: totalEventos, icon: "🗓️" },
+              { label: "Notas", value: dashboardStats.totalResumos, icon: "📝" },
+              { label: "Cards", value: dashboardStats.totalFlashcards, icon: "🃏" },
+              { 
+                label: "Eventos", 
+                value: dashboardStats.loading ? "..." : dashboardStats.totalEventos, 
+                icon: "🗓️" 
+              },
             ].map((item, i) => (
               <div
                 key={i}
