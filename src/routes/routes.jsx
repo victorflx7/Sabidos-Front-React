@@ -10,8 +10,8 @@ import Header from "../components/Header/Header";
 import Resumo from "../pages/Resumo";
 import Flashcard from "../pages/Flashcard"
 import Pomodoro from "../pages/Pomodoro"
-import SobreNos from "../pages/SobreNos"
 import SobreNosPage from "../pages/SobreNos";
+import PerfilPage from "../pages/Perfil"
 
 export function AppRoutes() {
   return (
@@ -29,6 +29,14 @@ export function AppRoutes() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <PrivateRoute>
+              <PerfilPage />
             </PrivateRoute>
           }
         />

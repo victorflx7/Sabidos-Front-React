@@ -1,0 +1,99 @@
+import { User, Mail, LogOut } from "lucide-react";
+import { useAuth } from "../../context/AuthContexts";
+
+const UserProfile = () => {
+  const { currentUser, backendUser, logout } = useAuth();
+  // Preparando os dados para exibição (Prioridade: SQL -> Firebase -> Fallback)
+  const displayData = {
+    name: backendUser?.name || currentUser?.displayName || "Sem nome definido",
+    bio: backendUser?.bio || "",
+    photoURL: backendUser?.avatar_url || currentUser?.photoURL || "",
+    email: currentUser?.email || "",
+    role: backendUser?.role || "Membro",
+  };
+
+  if (!currentUser && !backendUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
+        Carregando perfil...
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex items-start justify-center px-4 py-12">
+      <div className="bg-main-gradient rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden p-1">
+        <div className="bg-box rounded-xl overflow-hidden">
+          {/* Header / Capa */}
+          <div className="h-48 relative overflow-hidden">
+            <img src="/public/profileBg.jpeg" alt="" />
+            <div className="absolute top-4 right-4 text-white/80 text-sm font-medium bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+              {displayData.role.toUpperCase()}
+            </div>
+          </div>
+          {/* Conteúdo do Perfil */}
+          <div className="px-8 pb-8">
+            {/* Área do Avatar e Botão Sair */}
+            <div className="relative -mt-16 mb-6 flex justify-between items-end">
+              <div className="w-32 h-32 rounded-full border-4 border-gray-50 bg-gray-200 overflow-hidden shadow-lg flex items-center justify-center">
+                {displayData.photoURL ? (
+                  <img
+                    src={displayData.photoURL}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <User size={64} className="text-gray-400" />
+                )}
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-colors mb-2 cursor-pointer"
+              >
+                <LogOut size={18} />
+                Sair
+              </button>
+            </div>
+            {/* Dados de Visualização */}
+            <div className="grid gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-yellow mb-1">
+                    Nome Completo
+                  </label>
+                  <h2 className="text-2xl font-bold text-white">
+                    {displayData.name}
+                  </h2>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-yellow mb-1">
+                    Email
+                  </label>
+                  <div className="flex items-center gap-2 text-gray-200  px-4 py-2 rounded-lg border border-gray-100 w-fit">
+                    <Mail size={18} className="text-white" />
+                    <span>{displayData.email}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-yellow mb-1">
+                  Sobre Mim
+                </label>
+                <p className="text-white leading-relaxed">
+                  {displayData.bio || (
+                    <span className="italic text-white">
+                      Nenhuma descrição fornecida.
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserProfile;
