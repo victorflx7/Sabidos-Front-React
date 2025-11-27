@@ -27,33 +27,33 @@ export function AppRoutes() {
         <Route
           path="/dashboard"
           element={
-            
+            <PrivateRoute>
               <Dashboard />
-            
+            </PrivateRoute>
           }
         />
         <Route
           path="/agenda"
           element={
-            
+            <PrivateRoute>
               <Agenda />
-            
+            </PrivateRoute>
           }
         />
         <Route
           path="/resumo"
           element={
-            
+            <PrivateRoute>
               <Resumo />
-            
+            </PrivateRoute>
           }
         />
         <Route
           path="/flashcard"
           element={
-            
+            <PrivateRoute>
               <Flashcard />
-            
+            </PrivateRoute>
           }
         />
       </Routes>
