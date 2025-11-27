@@ -10,6 +10,8 @@ import Header from "../components/Header/Header";
 import Resumo from "../pages/Resumo";
 import Flashcard from "../pages/Flashcard"
 import Pomodoro from "../pages/Pomodoro"
+import SobreNos from "../pages/SobreNos"
+import SobreNosPage from "../pages/SobreNos";
 
 export function AppRoutes() {
   return (
@@ -20,37 +22,38 @@ export function AppRoutes() {
         <Route path="/pomodoro" element={<Pomodoro />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/sobrenos" element={<SobreNosPage />} />
 
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
+            
               <Dashboard />
-            </PrivateRoute>
+            
           }
         />
         <Route
           path="/agenda"
           element={
-            <PrivateRoute>
+            
               <Agenda />
-            </PrivateRoute>
+            
           }
         />
         <Route
           path="/resumo"
           element={
-            <PrivateRoute>
+            
               <Resumo />
-            </PrivateRoute>
+            
           }
         />
         <Route
           path="/flashcard"
           element={
-            <PrivateRoute>
+            
               <Flashcard />
-            </PrivateRoute>
+            
           }
         />
       </Routes>
