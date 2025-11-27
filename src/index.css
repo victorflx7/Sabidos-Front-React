@@ -12,11 +12,15 @@
   --color-red: #D6343B;
   --color-blue: #1499E2;
   --color-yellow: #f4cf63;
-  
+  --color-background: #1a1a2e;
+  --color-box: #423E51;
+  --background-image-main-gradient: linear-gradient(to right, #D6343B, #1499E2);
+
   /* Animações */
   --animate-fadeIn: fadeIn 0.3s ease-in-out;
   --animate-moveBackground: moveBackground 6s ease-in-out infinite;
 }
+
 /* ScrollBar customizada do SabidoS² */
 .scrollbar-custom::-webkit-scrollbar {
   width: 8px;
