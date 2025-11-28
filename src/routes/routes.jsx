@@ -12,6 +12,7 @@ import Flashcard from "../pages/Flashcard"
 import Pomodoro from "../pages/Pomodoro"
 import SobreNosPage from "../pages/SobreNos";
 import PerfilPage from "../pages/Perfil"
+import Footer from "../components/Footer/Footer";
 
 export function AppRoutes() {
   return (
@@ -65,6 +66,7 @@ export function AppRoutes() {
           }
         />
       </Routes>
+      <Footer />
     </>
   );
 }
