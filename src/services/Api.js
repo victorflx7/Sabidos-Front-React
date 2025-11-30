@@ -1,6 +1,7 @@
 // services/Api.js
 // Já funciona! Use localhost:
-export const API_BASE_URL = "http://localhost:5169/api"; 
+export const API_BASE_URL = "http://localhost:5173/api"; 
+// export const API_BASE_URL = "http://localhost:5169/api"; 
 // export const API_BASE_URL = "https://localhost:7091/api";
 
 // 🔐 Função para validação de login (substitui fetchWithAuth)
