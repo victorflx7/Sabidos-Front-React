@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContexts.jsx";
 import { PomodoroApi } from "../../services/PomodoroApi";
 import { EventoApi } from "../../services/EventoApi.js";
+import Tooltip from "./tooltip.jsx";
 
 export default function Dashboard() {
   const { backendUser, currentUser } = useAuth();
@@ -18,6 +19,7 @@ export default function Dashboard() {
     totalFlashcards: 6,
     loading: true,
   });
+  const [hoverIndex, setHoverIndex] = useState(null);
 
   // ✅ Buscar dados reais do Pomodoro
   useEffect(() => {
@@ -151,11 +153,36 @@ export default function Dashboard() {
 
           {/* Esferas menores orbitando */}
           {[
-            { to: "/Pomodoro", label: "🍅", angle: 5 },
-            { to: "/Flashcard", label: "🃏", angle: 50 },
-            { to: "/SobreNos", label: "👥", angle: 90 },
-            { to: "/Resumo", label: "📝", angle: 130 },
-            { to: "/Agenda", label: "📅", angle: 170 },
+            {
+              to: "/Pomodoro",
+              label: "🍅",
+              angle: 5,
+              tooltip: "Gerencie seu tempo",
+            },
+            {
+              to: "/Flashcard",
+              label: "🃏",
+              angle: 50,
+              tooltip: "Crie e revise seus flashcards",
+            },
+            {
+              to: "/SobreNos",
+              label: "👥",
+              angle: 90,
+              tooltip: "Conheça a equipe",
+            },
+            {
+              to: "/Resumo",
+              label: "📝",
+              angle: 130,
+              tooltip: "Organize seus estudos",
+            },
+            {
+              to: "/Agenda",
+              label: "📅",
+              angle: 170,
+              tooltip: "Planeje seus eventos",
+            },
           ].map((item, index) => {
             const radius = 160;
             const x = radius * Math.cos((item.angle * Math.PI) / 180);
@@ -165,12 +192,16 @@ export default function Dashboard() {
               <Link
                 key={index}
                 to={item.to}
-                className="absolute w-18 h-18 bg-[#3B2868] border-2 border-[#7763B3] rounded-full flex items-center justify-center hover:bg-[#322159] hover:border-[#5D45A7] transition-all hover:-translate-y-1"
-                style={{
-                  transform: `translate(${x}px, ${y}px)`,
-                }}
+                onMouseEnter={() => setHoverIndex(index)}
+                onMouseLeave={() => setHoverIndex(null)}
+                className="group absolute w-18 h-18 bg-[#3B2868] border-2 border-[#7763B3] rounded-full flex items-center justify-center hover:bg-[#322159] hover:border-[#5D45A7] transition-all hover:-translate-y-1 z-20"
+                style={{ transform: `translate(${x}px, ${y}px)` }}
               >
                 <span className="text-2xl">{item.label}</span>
+
+                {hoverIndex === index && (
+                  <Tooltip text={item.tooltip} position="top" />
+                )}
               </Link>
             );
           })}
