@@ -10,33 +10,33 @@ export default function Dashboard() {
   const [pomodoroStats, setPomodoroStats] = useState({
     totalStudyTime: 0,
     totalSessions: 0,
-    loading: true
+    loading: true,
   });
   const [dashboardStats, setDashboardStats] = useState({
     totalEventos: 0,
     totalResumos: 17,
     totalFlashcards: 6,
-    loading: true
+    loading: true,
   });
 
   // ✅ Buscar dados reais do Pomodoro
   useEffect(() => {
     const loadPomodoroStats = async () => {
       if (!currentUser?.uid) return;
-      
+
       try {
         const totalTime = await PomodoroApi.getTotalTime(currentUser.uid);
-        
+
         setPomodoroStats({
           totalStudyTime: totalTime || 0,
           totalSessions: 0,
-          loading: false
+          loading: false,
         });
       } catch (error) {
         console.error("Erro ao carregar stats do Pomodoro:", error);
-        setPomodoroStats(prev => ({ 
-          ...prev, 
-          loading: false 
+        setPomodoroStats((prev) => ({
+          ...prev,
+          loading: false,
         }));
       }
     };
@@ -48,18 +48,18 @@ export default function Dashboard() {
   useEffect(() => {
     const loadEventosCount = async () => {
       if (!currentUser?.uid) return;
-      
+
       try {
         const response = await EventoApi.getEventosCount(currentUser.uid);
-        
+
         // ✅ CORREÇÃO: Extrair o valor numérico do response
         let eventosCount = 0;
-        
-        if (response && typeof response === 'object') {
+
+        if (response && typeof response === "object") {
           // Se a API retornar { success: true, data: 5 }
           if (response.data !== undefined) {
             eventosCount = response.data;
-          } 
+          }
           // Se a API retornar { count: 5 }
           else if (response.count !== undefined) {
             eventosCount = response.count;
@@ -67,27 +67,29 @@ export default function Dashboard() {
           // Se a API retornar o número diretamente no objeto
           else {
             // Tenta encontrar qualquer valor numérico no objeto
-            const numericValues = Object.values(response).filter(val => typeof val === 'number');
+            const numericValues = Object.values(response).filter(
+              (val) => typeof val === "number"
+            );
             eventosCount = numericValues.length > 0 ? numericValues[0] : 0;
           }
-        } 
+        }
         // Se for diretamente um número
-        else if (typeof response === 'number') {
+        else if (typeof response === "number") {
           eventosCount = response;
         }
-        
+
         console.log("✅ Contagem de eventos:", eventosCount);
-        
-        setDashboardStats(prev => ({
+
+        setDashboardStats((prev) => ({
           ...prev,
           totalEventos: eventosCount,
-          loading: false
+          loading: false,
         }));
       } catch (error) {
         console.error("Erro ao carregar contagem de eventos:", error);
-        setDashboardStats(prev => ({ 
-          ...prev, 
-          loading: false 
+        setDashboardStats((prev) => ({
+          ...prev,
+          loading: false,
         }));
       }
     };
@@ -95,14 +97,14 @@ export default function Dashboard() {
     loadEventosCount();
   }, [currentUser]);
 
-  const userName = backendUser?.name?.split(' ')[0] || "Sabido";
+  const userName = backendUser?.name?.split(" ")[0] || "Sabido";
 
   const formatStudyTime = (seconds) => {
     if (!seconds || seconds === 0) return "0min";
-    
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -117,21 +119,22 @@ export default function Dashboard() {
 
         <div className="bg-[#292535] px-5 py-4 rounded-xl shadow-md text-[#EAEAEA]">
           <p className="font-semibold">
-            Opa {userName}! {pomodoroStats.totalStudyTime > 0 
-              ? `Já estudou ${formatStudyTime(pomodoroStats.totalStudyTime)}!` 
+            Opa {userName}!{" "}
+            {pomodoroStats.totalStudyTime > 0
+              ? `Já estudou ${formatStudyTime(pomodoroStats.totalStudyTime)}!`
               : "Vamos começar a estudar?"}
           </p>
 
           <p className="text-[#AFAFAF] text-sm">
-            {pomodoroStats.totalStudyTime > 0 
-              ? "Continue assim! 🎯" 
+            {pomodoroStats.totalStudyTime > 0
+              ? "Continue assim! 🎯"
               : "Bons estudos, mantenha o foco."}
           </p>
         </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="flex flex-col lg:flex-row items-start justify-center gap-12 w-full max-w-6xl">
+      <div className="flex flex-col items-center lg:flex-row lg:items-start justify-center gap-12 w-full max-w-6xl">
         {/* MENU DE ACESSO RÁPIDO */}
         <div className="relative w-[300px] h-[300px] flex items-center justify-center mx-auto">
           {/* esfera central */}
@@ -149,7 +152,7 @@ export default function Dashboard() {
           {/* Esferas menores orbitando */}
           {[
             { to: "/Pomodoro", label: "🍅", angle: 5 },
-            { to: "/Flashcards", label: "🃏", angle: 50 },
+            { to: "/Flashcard", label: "🃏", angle: 50 },
             { to: "/SobreNos", label: "👥", angle: 90 },
             { to: "/Resumo", label: "📝", angle: 130 },
             { to: "/Agenda", label: "📅", angle: 170 },
@@ -183,11 +186,13 @@ export default function Dashboard() {
 
             <p className="font-semibold text-sm mt-8">Você estudou por:</p>
             <p className="text-5xl font-extrabold mt-2 tracking-tight">
-              {pomodoroStats.loading ? "..." : formatStudyTime(pomodoroStats.totalStudyTime)}
+              {pomodoroStats.loading
+                ? "..."
+                : formatStudyTime(pomodoroStats.totalStudyTime)}
             </p>
             <p className="text-sm text-gray-400 mt-2">
-              {pomodoroStats.totalStudyTime > 0 
-                ? "Tempo total de foco" 
+              {pomodoroStats.totalStudyTime > 0
+                ? "Tempo total de foco"
                 : "Comece agora!"}
             </p>
           </div>
@@ -195,12 +200,22 @@ export default function Dashboard() {
           {/* CARDS SECUNDÁRIOS */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Notas", value: dashboardStats.totalResumos, icon: "📝" },
-              { label: "Cards", value: dashboardStats.totalFlashcards, icon: "🃏" },
-              { 
-                label: "Eventos", 
-                value: dashboardStats.loading ? "..." : dashboardStats.totalEventos, 
-                icon: "🗓️" 
+              {
+                label: "Notas",
+                value: dashboardStats.totalResumos,
+                icon: "📝",
+              },
+              {
+                label: "Cards",
+                value: dashboardStats.totalFlashcards,
+                icon: "🃏",
+              },
+              {
+                label: "Eventos",
+                value: dashboardStats.loading
+                  ? "..."
+                  : dashboardStats.totalEventos,
+                icon: "🗓️",
               },
             ].map((item, i) => (
               <div
@@ -210,13 +225,9 @@ export default function Dashboard() {
                 <div className="absolute -top-6 w-12 h-12 bg-[#3B2868] rounded-lg border-2 border-[#7763B3] flex items-center justify-center">
                   <span className="text-2xl">{item.icon}</span>
                 </div>
-                
-                <p className="font-semibold text-sm mb-2">
-                  {item.label}
-                </p>
-                <p className="text-2xl font-extrabold">
-                  {item.value}
-                </p>
+
+                <p className="font-semibold text-sm mb-2">{item.label}</p>
+                <p className="text-2xl font-extrabold">{item.value}</p>
               </div>
             ))}
           </div>
