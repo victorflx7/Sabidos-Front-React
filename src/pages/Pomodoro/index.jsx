@@ -418,7 +418,7 @@ const criarSessaoTeste = async () => {
     "px-6 py-3 border-none rounded-lg text-[#292535] font-bold cursor-pointer transition-all duration-300 ease-in-out text-base hover:not(:disabled):-translate-y-0.5 hover:not(:disabled):shadow-lg hover:not(:disabled):shadow-black/30 disabled:bg-[#cccccc] disabled:cursor-not-allowed disabled:transform-none";
 
   return (
-    <div className="flex flex-col items-center min-h-[80vh] gap-8 py-12 px-3 bg-[#171621] h-screen">
+    <div className="flex flex-col items-center min-h-[80vh] gap-8 py-12 px-3">
       {/* 🔧 BOTÃO PARA MODO DESENVOLVEDOR */}
       <div className="absolute top-4 right-4">
         <button

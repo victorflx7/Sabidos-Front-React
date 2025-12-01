@@ -313,7 +313,7 @@ const AgendaPage = () => {
     
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full bg-[#171621]">
+        <div className="flex justify-center items-center min-h-screen w-full">
             <main className='flex flex-col lg:flex-row justify-center items-start min-h-[90vh] lg:h-[90vh] p-4 lg:p-8 gap-8 w-full max-w-7xl mx-auto'>
                 
                 {/* CALENDÁRIO */}
@@ -326,7 +326,7 @@ const AgendaPage = () => {
                             className="bg-transparent border-none cursor-pointer p-2 rounded-full transition-all duration-300 hover:bg-[#FBCB4E]/20"
                         >
                             <img 
-                                src="/SetaEsquerda.svg" 
+                                src="IconesSVG/setaAgendaE.svg" 
                                 alt="Mês Anterior" 
                                 className="w-6 h-6 invert sepia-[30%] saturate-[1000%] hue-rotate-[340deg] brightness-[105%] contrast-[95%]" 
                             />
@@ -346,7 +346,7 @@ const AgendaPage = () => {
                             className="bg-transparent border-none cursor-pointer p-2 rounded-full transition-all duration-300 hover:bg-[#FBCB4E]/20"
                         >
                             <img 
-                                src="/SetaDireita.svg" 
+                                src="IconesSVG/setaAgendaD.svg" 
                                 alt="Próximo Mês" 
                                 className="w-6 h-6 invert sepia-[30%] saturate-[1000%] hue-rotate-[340deg] brightness-[105%] contrast-[95%]" 
                             />
