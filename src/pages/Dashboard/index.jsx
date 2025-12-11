@@ -156,7 +156,7 @@ export default function Dashboard() {
             {
               to: "/Pomodoro",
               label: "🍅",
-              angle: 5,
+              angle: 10,
               tooltip: "Gerencie seu tempo",
             },
             {
