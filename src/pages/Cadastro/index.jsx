@@ -9,7 +9,6 @@ import {
   signInWithPopup 
 } from "firebase/auth";
 import { db } from "../../firebase/FirebaseConfig";
-import { syncUserToBackend } from "../../services/Api"; 
 import { useAuth } from "../../context/AuthContexts";
 
 const Cadastro = () => {
@@ -72,8 +71,6 @@ const Cadastro = () => {
         ativo: true,
       });
 
-      // 🗄️ Sincroniza com SQL Server
-      await syncUserToBackend(user, dadosUsuario.nome);
 
       setSucesso("🎉 Cadastro realizado com sucesso! Redirecionando...");
       // O redirecionamento automático acontecerá pelo useEffect
@@ -116,9 +113,7 @@ const Cadastro = () => {
         ativo: true,
       }, { merge: true });
 
-      // 🗄️ Sincroniza com SQL Server
-      await syncUserToBackend(user);
-
+      
       setSucesso("🎉 Cadastro com Google realizado com sucesso!");
       // O redirecionamento automático acontecerá pelo useEffect
 
