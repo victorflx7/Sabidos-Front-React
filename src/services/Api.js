@@ -11,8 +11,8 @@ export const validateLogin = async (firebaseUid, email) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        FirebaseUid: firebaseUid,
-        Email: email
+         firebaseUid,
+         email
       })
     });
 
@@ -29,18 +29,16 @@ export const validateLogin = async (firebaseUid, email) => {
 };
 
 // ✅ Função para sincronização (cadastro)
-export const syncUserToBackend = async (user, name = null) => {
+export const syncUserToBackend = async (user, name) => {
   try {
-    const syncDto = {
-      FirebaseUid: user.uid,
-      Email: user.email,
-      Name: name || user.displayName
-    };
-
     const res = await fetch(`${API_BASE_URL}/user/sync`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(syncDto)
+      body: JSON.stringify({
+        FirebaseUid: user.uid,
+        Email: user.email,
+        Name: name || user.displayName
+      })
     });
 
     if (!res.ok) {
