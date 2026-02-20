@@ -7,11 +7,13 @@ function IconProfile() {
   const { logout } = useAuth();
 
 
-    const handleLogout = async () => {
-    if (window.confirm("Tem certeza que deseja sair?")) {
-      await logout();
-    }
-  };
+   const handleLogout = async () => {
+  if (window.confirm("Tem certeza que deseja sair?")) {
+    await logout();
+    navigate("/login");
+  }
+};
+
 
   return (
     <div className="relative group">
