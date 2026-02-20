@@ -14,6 +14,12 @@ export function AuthProvider({ children }) {
   const [backendUser, setBackendUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 LOGOUT CORRETO
+  const logout = async () => {
+    setBackendUser(null);
+    await signOut(auth);
+  };
+
   const handleAuthFailure = async () => {
     setBackendUser(null);
     await signOut(auth);
@@ -26,8 +32,10 @@ export function AuthProvider({ children }) {
       if (result.success) {
         setBackendUser(result.user);
       } else {
-        // 🔥 Se não existir, sincroniza
-        const syncedUser = await syncUserToBackend(user, user.displayName || "Usuário");
+        const syncedUser = await syncUserToBackend(
+          user,
+          user.displayName || "Usuário"
+        );
         setBackendUser(syncedUser);
       }
     } catch (error) {
@@ -58,6 +66,7 @@ export function AuthProvider({ children }) {
         currentUser,
         backendUser,
         loading,
+        logout, // ✅ AGORA ESTÁ DISPONÍVEL
       }}
     >
       {!loading && children}
