@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContexts.jsx";
 import { PomodoroApi } from "../../services/PomodoroApi";
 import { EventoApi } from "../../services/EventoApi.js";
 import Tooltip from "./tooltip.jsx";
+import { getHomeStats } from "../../services/HomeStatsService";
 
 export default function Dashboard() {
   const { backendUser, currentUser } = useAuth();
@@ -15,9 +16,14 @@ export default function Dashboard() {
   });
   const [dashboardStats, setDashboardStats] = useState({
     totalEventos: 0,
-    totalResumos: 17,
-    totalFlashcards: 6,
+    totalResumos: 0,
+    totalFlashcards: 0,
     loading: true,
+  }); // A estrutura baixo é a martualizada pegando os dados Vocês já precisam fazer uma refatorização Devido o lixo do código de variáveis Que está ali nesse comentário
+  
+  const [stats, setStats] = useState({
+    resumos: 0,
+    flashcards: 0,
   });
   const [hoverIndex, setHoverIndex] = useState(null);
 
@@ -98,6 +104,20 @@ export default function Dashboard() {
 
     loadEventosCount();
   }, [currentUser]);
+
+
+    useEffect(() => {
+    async function loadStats() {
+      try {
+        const data = await getHomeStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Erro ao carregar estatísticas:", error);
+      }
+    }
+
+    loadStats();
+  }, []);
 
   const userName = backendUser?.name?.split(" ")[0] || "Sabido";
 
@@ -232,13 +252,13 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-4">
             {[
               {
-                label: "Notas",
-                value: dashboardStats.totalResumos,
-                icon: "📝",
+                  label: "Notas",
+                  value: stats.resumos,
+                  icon: "📝",
               },
               {
                 label: "Cards",
-                value: dashboardStats.totalFlashcards,
+                value:  stats.flashcards,
                 icon: "🃏",
               },
               {
